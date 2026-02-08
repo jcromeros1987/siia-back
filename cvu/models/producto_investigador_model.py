@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 
+from cvu.DTOs.producto_investigador_dto import ProductoInvestigadorCheckerDTO
 from cvu.models import User, CatalogoProducto
 
 
@@ -29,3 +30,10 @@ class ProductoInvestigador(models.Model):
 
     def __str__(self):
         return f"{self.titulo} ({self.id_producto})"
+
+    def to_checker_dto(self):
+        return ProductoInvestigadorCheckerDTO(
+            id=self.id,
+            tipo=self.tipo.nombre,
+            investigador=self.investigador.id,
+        )
