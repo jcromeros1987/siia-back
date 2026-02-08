@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 
+from cvu.DTOs import CatalogoProductoDTO
+
 
 class CatalogoProducto(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -14,3 +16,6 @@ class CatalogoProducto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def to_dto(self):
+        return CatalogoProductoDTO(nombre=self.nombre)
