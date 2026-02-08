@@ -1,0 +1,1 @@
+from .catalogo_producto_dto import CatalogoProductoDTO
