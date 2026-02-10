@@ -91,6 +91,19 @@ class CVURepository:
     def get_producto_investigador(
         self, id_producto: UUID, investigador_id: UUID
     ) -> Result[ProductoInvestigadorCheckerDTO]:
+        """
+        Retrieves a single product for a researcher.
+
+        Args:
+            id_producto (UUID): The product's unique identifier.
+            investigador_id (UUID): The researcher's unique identifier.
+
+        Returns:
+            Result[ProductoInvestigadorCheckerDTO]: A Result object containing:
+                - On success: A ProductoInvestigadorCheckerDTO object for the requested product.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher doesn't exist
+                  or the product is not found/inactive.
+        """
         investigador = User.objects.filter(id=investigador_id).first()
         if not investigador:
             return Result.err_from(ErrorCode.NOT_FOUND, "Investigador no encontrado")
