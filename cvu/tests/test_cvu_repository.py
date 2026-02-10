@@ -338,3 +338,89 @@ class TestCVURepository:
         # Verify only active product was deleted
         assert ProductoInvestigador.objects.count() == 1
         assert ProductoInvestigador.objects.first().status is False
+
+    @pytest.mark.django_db
+    def test_update_producto_investigador_returns_error_when_product_not_found(self):
+        """Test that update_producto_investigador returns error when product doesn't exist."""
+        from cvu.models import User
+
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        non_existent_product_uuid = uuid.uuid4()
+
+        repository = CVURepository()
+        result = repository.update_producto_investigador(
+            id_producto=non_existent_product_uuid,
+            investigador_id=investigador.id,
+            data={"test": "data"},
+            eje="eje",
+            titulo="New Title",
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_err()
+        assert result.get_error().code == ErrorCode.NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_update_producto_investigador_success(self):
+        """Test that update_producto_investigador successfully updates a product."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+        producto = ProductoInvestigador.objects.create(
+            titulo="Original Title",
+            eje="original_eje",
+            tipo=tipo,
+            investigador=investigador,
+            contenido={"original": "data"},
+            status=True,
+        )
+
+        repository = CVURepository()
+        result = repository.update_producto_investigador(
+            id_producto=producto.id,
+            investigador_id=investigador.id,
+            data={"updated": "data"},
+            eje="new_eje",
+            titulo="New Title",
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        dto = result.unwrap()
+        assert dto.id == producto.id
+
+        # Verify product was updated in database
+        updated_producto = ProductoInvestigador.objects.get(id=producto.id)
+        assert updated_producto.titulo == "New Title"
+        assert updated_producto.eje == "new_eje"
+        assert updated_producto.contenido == {"updated": "data"}
+
+    @pytest.mark.django_db
+    def test_update_producto_investigador_ignores_inactive_products(self):
+        """Test that update_producto_investigador ignores products with status=False."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+        producto = ProductoInvestigador.objects.create(
+            titulo="Inactive Product",
+            tipo=tipo,
+            investigador=investigador,
+            status=False,
+        )
+
+        repository = CVURepository()
+        result = repository.update_producto_investigador(
+            id_producto=producto.id,
+            investigador_id=investigador.id,
+            data={"test": "data"},
+            eje="eje",
+            titulo="Updated Title",
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_err()
+        assert result.get_error().code == ErrorCode.NOT_FOUND
