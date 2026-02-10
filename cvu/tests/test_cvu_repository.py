@@ -28,3 +28,18 @@ class TestCVURepository:
         assert result.is_err()
         assert result.get_error().code == ErrorCode.NOT_FOUND
         assert "Tipo de producto no encontrado" in result.get_error().message
+
+    @pytest.mark.django_db
+    def test_get_catalogo_producto_returns_success_when_tipo_exists(self):
+        """Test that get_catalogo_producto returns success when tipo exists."""
+        from cvu.models import CatalogoProducto
+
+        # Create a test product type
+        CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        repository = CVURepository()
+        result = repository.get_catalogo_producto("Articulo")
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        assert result.unwrap().nombre == "Articulo"
