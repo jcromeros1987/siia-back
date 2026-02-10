@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from cvu.repository.cvu_repository import CVURepository
 from cvu.utils import Result, ErrorCode
@@ -43,3 +45,44 @@ class TestCVURepository:
         assert isinstance(result, Result)
         assert result.is_ok()
         assert result.unwrap().nombre == "Articulo"
+
+    @pytest.mark.django_db
+    def test_create_producto_investigador_returns_error_when_investigador_not_found(
+        self,
+    ):
+        """Test that create_producto_investigador returns error when investigador doesn't exist."""
+        repository = CVURepository()
+        non_existent_uuid = uuid.uuid4()
+        result = repository.create_producto_investigador(
+            contenido={"test": "data"},
+            tipo="Articulo",
+            investigador_id=non_existent_uuid,
+            is_from_file=False,
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_err()
+        assert result.get_error().code == ErrorCode.NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_create_producto_investigador_success(self):
+        """Test that create_producto_investigador successfully creates a product."""
+        from cvu.models import User, CatalogoProducto
+
+        # Create a test investigador
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        repository = CVURepository()
+
+        result = repository.create_producto_investigador(
+            contenido={"eje": "eje", "titulo": "titulo", "test": "data"},
+            tipo=tipo.nombre,
+            investigador_id=investigador.id,
+            is_from_file=False,
+        )
+
+        assert isinstance(result, Result)
+        print(result.to_dict())
+        assert result.is_ok()
+        assert result.unwrap()["investigador"] == investigador.id
