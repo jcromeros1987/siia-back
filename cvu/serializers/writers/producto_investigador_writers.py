@@ -1,17 +1,8 @@
 from rest_framework import serializers
 
+from cvu.constants import POSSIBLE_TITLE_ATTRS
 from cvu.models import ProductoInvestigador
-
-
-possible_title_attrs = [
-    "titulo",
-    "nombre",
-    "distincion",
-    "nombramiento",
-    "nombreProducto",
-    "nombreCurso",
-    "nombreFondo",
-]
+from cvu.utils import search_in_dict
 
 
 class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
@@ -57,7 +48,7 @@ class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
 
         if isinstance(contenido, dict):
             eje = contenido.get("eje", "") or ""
-            titulo = search_in_dict(contenido, possible_title_attrs) or ""
+            titulo = search_in_dict(contenido, POSSIBLE_TITLE_ATTRS) or ""
 
         return eje, titulo
 
@@ -122,19 +113,3 @@ class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
             )
 
         return attrs
-
-
-def search_in_dict(data: dict, keys: list) -> str | None:
-    """Helper para buscar en un dict haciendo BFS."""
-    if not isinstance(data, dict):
-        return None
-
-    queue = []
-    queue.extend(data.items())
-    while queue:
-        key, value = queue.pop(0)
-        if isinstance(value, dict):
-            queue.extend(value.items())
-        elif key in keys and value is not None:
-            return str(value)
-    return None
