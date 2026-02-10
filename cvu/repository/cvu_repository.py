@@ -190,6 +190,22 @@ class CVURepository:
         eje: str,
         titulo: str,
     ) -> Result[ProductoInvestigadorCheckerDTO]:
+        """
+        Updates a product for a researcher.
+
+        Args:
+            id_producto (UUID): The product's unique identifier.
+            investigador_id (UUID): The researcher's unique identifier.
+            data (dict): The updated product content data.
+            eje (str): The updated product axis/category.
+            titulo (str): The updated product title.
+
+        Returns:
+            Result[ProductoInvestigadorCheckerDTO]: A Result object containing:
+                - On success: A ProductoInvestigadorCheckerDTO object for the updated product.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the product is not found,
+                  the researcher doesn't match, or the product is inactive (status=False).
+        """
         instance = ProductoInvestigador.objects.filter(
             id=id_producto, investigador=investigador_id, status=True
         ).first()
