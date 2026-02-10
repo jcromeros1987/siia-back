@@ -12,8 +12,14 @@ dependencies = [
     "djangorestframework-simplejwt==5.5.1",
     "pytest==9.0.2",
     "pytest-django==4.11.1",
-    "mysqlclient==2.2.7"
+    "mysqlclient==2.2.7",
+    "pytest-watcher==0.6.3"
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F402"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "siia_backend.settings"
+python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
+addopts = "--reuse-db"
