@@ -26,7 +26,7 @@ class CVURepository:
         instances = CatalogoProducto.objects.all()
         return Result.ok(tuple(instance.to_dto() for instance in instances))
 
-    def get_catologo_producto(self, tipo: str) -> Result[CatalogoProductoDTO]:
+    def get_catalogo_producto(self, tipo: str) -> Result[CatalogoProductoDTO]:
         """
         Retrieves a single product type from the catalog by name.
 
