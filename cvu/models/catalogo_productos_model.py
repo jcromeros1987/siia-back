@@ -14,8 +14,8 @@ class CatalogoProducto(models.Model):
         verbose_name = "Catalogo Producto"
         verbose_name_plural = "Catalogo Productos"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.nombre
 
-    def to_dto(self):
+    def to_dto(self) -> CatalogoProductoDTO:
         return CatalogoProductoDTO(nombre=self.nombre)
