@@ -119,6 +119,19 @@ class CVURepository:
     def get_productos_investigador(
         self, investigador_id: UUID, status: bool = None, is_from_file: bool = None
     ) -> Result[Iterable[ProductoInvestigadorCheckerDTO]]:
+        """
+        Retrieves all products for a researcher with optional filtering.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+            status (bool, optional): Filter by product status. Defaults to None (no filter).
+            is_from_file (bool, optional): Filter by whether product is from a file. Defaults to None (no filter).
+
+        Returns:
+            Result[Iterable[ProductoInvestigadorCheckerDTO]]: A Result object containing:
+                - On success: An Iterable of ProductoInvestigadorCheckerDTO objects for the researcher's products.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher doesn't exist.
+        """
         args = {}
         if status is not None:
             args["status"] = status
@@ -137,6 +150,20 @@ class CVURepository:
         is_from_file: bool = None,
         logic: bool = False,
     ) -> Result[str]:
+        """
+        Deletes products for a researcher with optional filtering.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+            status (bool, optional): Filter by product status before deletion. Defaults to None (no filter).
+            is_from_file (bool, optional): Filter by whether product is from a file before deletion. Defaults to None (no filter).
+            logic (bool, optional): If True, performs soft delete (sets status=False). If False, performs hard delete (removes from database). Defaults to False.
+
+        Returns:
+            Result[str]: A Result object containing:
+                - On success: A success message "Productos eliminados".
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher doesn't exist.
+        """
         args = {}
         if status is not None:
             args["status"] = status
