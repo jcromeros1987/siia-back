@@ -147,3 +147,194 @@ class TestCVURepository:
         assert dto.id == producto.id
         assert dto.tipo == "Articulo"
         assert dto.investigador == investigador.id
+
+    @pytest.mark.django_db
+    def test_get_productos_investigador_returns_error_when_investigador_not_found(self):
+        """Test that get_productos_investigador returns error when investigador doesn't exist."""
+        repository = CVURepository()
+        non_existent_uuid = uuid.uuid4()
+
+        result = repository.get_productos_investigador(
+            investigador_id=non_existent_uuid
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_err()
+        assert result.get_error().code == ErrorCode.NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_get_productos_investigador_returns_empty_when_no_products(self):
+        """Test that get_productos_investigador returns empty iterable when investigador has no products."""
+        from cvu.models import User
+
+        # Create a test investigador with no products
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+
+        repository = CVURepository()
+        result = repository.get_productos_investigador(investigador_id=investigador.id)
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        assert len(result.unwrap()) == 0
+
+    @pytest.mark.django_db
+    def test_get_productos_investigador_returns_all_products(self):
+        """Test that get_productos_investigador returns all products for an investigador."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        # Create multiple products
+        ProductoInvestigador.objects.create(
+            titulo="Product 1",
+            tipo=tipo,
+            investigador=investigador,
+            status=True,
+        )
+        ProductoInvestigador.objects.create(
+            titulo="Product 2",
+            tipo=tipo,
+            investigador=investigador,
+            status=True,
+        )
+
+        repository = CVURepository()
+        result = repository.get_productos_investigador(investigador_id=investigador.id)
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        assert len(result.unwrap()) == 2
+
+    @pytest.mark.django_db
+    def test_get_productos_investigador_filters_by_status(self):
+        """Test that get_productos_investigador filters by status correctly."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        # Create products with different statuses
+        ProductoInvestigador.objects.create(
+            titulo="Active Product",
+            tipo=tipo,
+            investigador=investigador,
+            status=True,
+        )
+        ProductoInvestigador.objects.create(
+            titulo="Inactive Product",
+            tipo=tipo,
+            investigador=investigador,
+            status=False,
+        )
+
+        repository = CVURepository()
+        result = repository.get_productos_investigador(
+            investigador_id=investigador.id, status=True
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        assert len(result.unwrap()) == 1
+
+    @pytest.mark.django_db
+    def test_delete_productos_investigador_returns_error_when_investigador_not_found(
+        self,
+    ):
+        """Test that delete_productos_investigador returns error when investigador doesn't exist."""
+        repository = CVURepository()
+        non_existent_uuid = uuid.uuid4()
+
+        result = repository.delete_productos_investigador(
+            investigador_id=non_existent_uuid
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_err()
+        assert result.get_error().code == ErrorCode.NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_delete_productos_investigador_soft_delete(self):
+        """Test that delete_productos_investigador performs soft delete when logic=True."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+        ProductoInvestigador.objects.create(
+            titulo="Product to Delete",
+            tipo=tipo,
+            investigador=investigador,
+            status=True,
+        )
+
+        repository = CVURepository()
+        result = repository.delete_productos_investigador(
+            investigador_id=investigador.id, logic=True
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        # Verify product still exists but with status=False
+        producto = ProductoInvestigador.objects.first()
+        assert producto is not None
+        assert producto.status is False
+
+    @pytest.mark.django_db
+    def test_delete_produtos_investigador_hard_delete(self):
+        """Test that delete_productos_investigador performs hard delete when logic=False."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+        ProductoInvestigador.objects.create(
+            titulo="Product to Delete",
+            tipo=tipo,
+            investigador=investigador,
+            status=True,
+        )
+
+        repository = CVURepository()
+        result = repository.delete_productos_investigador(
+            investigador_id=investigador.id, logic=False
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        # Verify product is deleted
+        assert ProductoInvestigador.objects.count() == 0
+
+    @pytest.mark.django_db
+    def test_delete_productos_investigador_filters_by_status(self):
+        """Test that delete_productos_investigador filters by status."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+        ProductoInvestigador.objects.create(
+            titulo="Active Product",
+            tipo=tipo,
+            investigador=investigador,
+            status=True,
+        )
+        ProductoInvestigador.objects.create(
+            titulo="Inactive Product",
+            tipo=tipo,
+            investigador=investigador,
+            status=False,
+        )
+
+        repository = CVURepository()
+        result = repository.delete_productos_investigador(
+            investigador_id=investigador.id, status=True, logic=False
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        # Verify only active product was deleted
+        assert ProductoInvestigador.objects.count() == 1
+        assert ProductoInvestigador.objects.first().status is False
