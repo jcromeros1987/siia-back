@@ -4,10 +4,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from backend.authentication import CookieTokenAuthentication
-from backend.models import Catalogo, Usuario
-from backend.permissions import HasAcceptedPrivacyPolicy
-from backend.services import CVUService
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from cvu.logger import logger
+from cvu.domain import CVUService
+from cvu.models import User, CatalogoProducto
 
 
 class CVUView(ViewSet):
@@ -33,8 +34,8 @@ class CVUView(ViewSet):
         - GET api/cvu/form/<product_type>/: Obtiene las especificaciones del formulario para un tipo de producto.
     """
 
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [IsAuthenticated, HasAcceptedPrivacyPolicy]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     service = CVUService()
     http_method_names = ["post", "get", "patch"]
 
@@ -61,24 +62,25 @@ class CVUView(ViewSet):
         """
         cvu_file = request.FILES.get("cvuFile")
         usuario_id = request.data.get("usuario")
-        usuario_instance = Usuario.objects.filter(id=usuario_id).first()
+        usuario_instance = User.objects.filter(id=usuario_id).first()
         if not usuario_instance:
             return Response(
                 {"message": "Usuario no encontrado."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        success, data = self.service.read_cvu(
-            cvu_file, investigador=usuario_instance, is_insert=True
+        logger.info(
+            f"Usuario {request.user.id} está cargando un CVU para el usuario {usuario_id}."
         )
-        if success:
+        result = self.service.read_cvu(cvu_file, investigador_id=usuario_instance.id)
+        if result.is_ok():
             return Response(
-                {"message": "CVU cargado correctamente", "data": data},
+                {"message": "CVU cargado correctamente", "data": result.unwrap()},
                 status=status.HTTP_201_CREATED,
             )
 
         return Response(
-            {"message": "Error al cargar CVU", "data": data},
+            {"message": "Error al cargar CVU", "data": result.unwrap()},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -192,9 +194,7 @@ class CVUView(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        type_instance = Catalogo.objects.filter(
-            catalogo="Tipo Producto Investigador", valor=product_type
-        ).first()
+        type_instance = CatalogoProducto.objects.filter(label=product_type).first()
         if not type_instance:
             return Response(
                 {"message": "Tipo de producto no válido."},
