@@ -125,18 +125,18 @@ class CVURepository:
         check_dto: bool = True,
     ) -> Result[Iterable[ProductoInvestigadorCheckerDTO]]:
         """
-        Retrieves all products for a researcher with optional filtering.
+        Retrieves products for a researcher with optional filtering.
 
         Args:
-            investigador_id (UUID): The researcher's unique identifier.
-            tipo (str, optional): Filter by product type name. Defaults to None (no filter).
-            status (bool, optional): Filter by product status. Defaults to None (no filter).
-            is_from_file (bool, optional): Filter by whether product is from a file. Defaults to None (no filter).
+            investigador_id: Researcher's unique identifier.
+            tipo: Filter by product type name (optional).
+            status: Filter by product status (optional).
+            is_from_file: Filter by whether product is from a file (optional).
+            check_dto: If True, returns ProductoInvestigadorCheckerDTO (minimal fields).
+                      If False, returns ProductoInvestigadorDTO (all fields). Defaults to True.
 
         Returns:
-            Result[Iterable[ProductoInvestigadorCheckerDTO]]: A Result object containing:
-                - On success: An Iterable of ProductoInvestigadorCheckerDTO objects for the researcher's products.
-                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher doesn't exist.
+            Result containing an Iterable of product DTOs on success, or an error on failure.
         """
         args = {}
         if status is not None:
