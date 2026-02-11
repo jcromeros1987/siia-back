@@ -424,3 +424,78 @@ class TestCVURepository:
         assert isinstance(result, Result)
         assert result.is_err()
         assert result.get_error().code == ErrorCode.NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_insert_productos_investigador_returns_error_when_investigador_not_found(
+        self,
+    ):
+        """Test that insert_productos_investigador returns error when investigador doesn't exist."""
+        repository = CVURepository()
+        non_existent_uuid = uuid.uuid4()
+
+        result = repository.insert_productos_investigador(
+            productos={"Articulo": []}, investigador_id=non_existent_uuid
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_err()
+        assert result.get_error().code == ErrorCode.NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_insert_productos_investigador_success(self):
+        """Test that insert_productos_investigador successfully inserts products."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        repository = CVURepository()
+
+        productos = {
+            "Articulo": [
+                {
+                    "id": "prod_1",
+                    "eje": "eje_1",
+                    "titulo": "Producto 1",
+                    "contenido": {"data": "value1"},
+                },
+                {
+                    "id": "prod_2",
+                    "eje": "eje_2",
+                    "titulo": "Producto 2",
+                    "contenido": {"data": "value2"},
+                },
+            ]
+        }
+
+        result = repository.insert_productos_investigador(
+            productos=productos, investigador_id=investigador.id
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+
+        # Verify products were created
+        created_productos = ProductoInvestigador.objects.filter(
+            investigador=investigador
+        )
+        assert created_productos.count() == 2
+
+    @pytest.mark.django_db
+    def test_insert_productos_investigador_empty_list(self):
+        """Test that insert_productos_investigador handles empty product list."""
+        from cvu.models import User, CatalogoProducto
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        repository = CVURepository()
+
+        result = repository.insert_productos_investigador(
+            productos={"Articulo": []}, investigador_id=investigador.id
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
