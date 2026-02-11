@@ -240,6 +240,95 @@ class TestCVURepository:
         assert len(result.unwrap()) == 1
 
     @pytest.mark.django_db
+    def test_get_productos_investigador_filters_by_tipo(self):
+        """Test that get_productos_investigador filters by tipo correctly."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        articulo_tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+        libro_tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Libro")
+
+        # Create products with different types
+        ProductoInvestigador.objects.create(
+            titulo="Test Article",
+            tipo=articulo_tipo,
+            investigador=investigador,
+        )
+        ProductoInvestigador.objects.create(
+            titulo="Test Book",
+            tipo=libro_tipo,
+            investigador=investigador,
+        )
+
+        repository = CVURepository()
+        result = repository.get_productos_investigador(
+            investigador_id=investigador.id, tipo="Articulo"
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        productos = result.unwrap()
+        assert len(productos) == 1
+        assert productos[0].tipo == "Articulo"
+
+    @pytest.mark.django_db
+    def test_get_productos_investigador_check_dto_true(self):
+        """Test that get_productos_investigador returns ProductoInvestigadorCheckerDTO when check_dto=True."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+        from cvu.DTOs.producto_investigador_dto import ProductoInvestigadorCheckerDTO
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        ProductoInvestigador.objects.create(
+            titulo="Test Product",
+            tipo=tipo,
+            investigador=investigador,
+        )
+
+        repository = CVURepository()
+        result = repository.get_productos_investigador(
+            investigador_id=investigador.id, check_dto=True
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        productos = result.unwrap()
+        assert len(productos) == 1
+        assert isinstance(productos[0], ProductoInvestigadorCheckerDTO)
+
+    @pytest.mark.django_db
+    def test_get_productos_investigador_check_dto_false(self):
+        """Test that get_productos_investigador returns ProductoInvestigadorDTO when check_dto=False."""
+        from cvu.models import User, CatalogoProducto, ProductoInvestigador
+        from cvu.DTOs.producto_investigador_dto import ProductoInvestigadorDTO
+
+        # Create test data
+        investigador = User.objects.create(id=uuid.uuid4(), email="test@example.com")
+        tipo, _ = CatalogoProducto.objects.get_or_create(nombre="Articulo")
+
+        ProductoInvestigador.objects.create(
+            titulo="Test Product",
+            tipo=tipo,
+            investigador=investigador,
+            contenido={"test": "data"},
+            eje="test_eje",
+        )
+
+        repository = CVURepository()
+        result = repository.get_productos_investigador(
+            investigador_id=investigador.id, check_dto=False
+        )
+
+        assert isinstance(result, Result)
+        assert result.is_ok()
+        productos = result.unwrap()
+        assert len(productos) == 1
+        assert isinstance(productos[0], ProductoInvestigadorDTO)
+
+    @pytest.mark.django_db
     def test_delete_productos_investigador_returns_error_when_investigador_not_found(
         self,
     ):
