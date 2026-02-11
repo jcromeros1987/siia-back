@@ -219,6 +219,46 @@ class CVURepository:
 
         return Result.ok(instance.to_checker_dto())
 
+    def insert_productos_investigador(
+        self, productos: dict, investigador_id: UUID
+    ) -> Result[str]:
+        def populate_productos_list(
+            productos_list: list,
+            investigador_instance: User,
+            catalogo: CatalogoProductoDTO,
+            productos_result: list,
+        ) -> Result[list]:
+            catalogo_instance = CatalogoProducto.objects.filter(
+                nombre=catalogo.nombre
+            ).first()
+            for producto_data in productos_list:
+                productos_result.append(
+                    ProductoInvestigador(
+                        id_producto=producto_data.get("id"),
+                        eje=producto_data.get("eje"),
+                        titulo=producto_data.get("titulo"),
+                        contenido=producto_data.get("contenido"),
+                        tipo=catalogo_instance,
+                        investigador=investigador_instance,
+                    )
+                )
+            return Result.ok(productos_result)
+
+        nuevos_productos = []
+        investigador = User.objects.filter(id=investigador_id).first()
+        if not investigador:
+            return Result.err_from(ErrorCode.NOT_FOUND, "Investigador no encontrado")
+
+        for tipo, producto_list in productos.items():
+            self.get_catalogo_producto(tipo).and_then(
+                lambda catalogo: populate_productos_list(
+                    producto_list, investigador, catalogo, nuevos_productos
+                )
+            )
+
+        ProductoInvestigador.objects.bulk_create(nuevos_productos)
+        return Result.ok("Productos de investigador insertados correctamente.")
+
     def _get_productos_investigador(
         self, investigador_id: UUID, **kwargs: dict
     ) -> Result[QuerySet]:
