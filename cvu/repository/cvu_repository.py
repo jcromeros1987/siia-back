@@ -117,13 +117,19 @@ class CVURepository:
         return Result.ok(instance.to_checker_dto())
 
     def get_productos_investigador(
-        self, investigador_id: UUID, status: bool = None, is_from_file: bool = None
+        self,
+        investigador_id: UUID,
+        tipo: str = None,
+        status: bool = None,
+        is_from_file: bool = None,
+        check_dto: bool = True,
     ) -> Result[Iterable[ProductoInvestigadorCheckerDTO]]:
         """
         Retrieves all products for a researcher with optional filtering.
 
         Args:
             investigador_id (UUID): The researcher's unique identifier.
+            tipo (str, optional): Filter by product type name. Defaults to None (no filter).
             status (bool, optional): Filter by product status. Defaults to None (no filter).
             is_from_file (bool, optional): Filter by whether product is from a file. Defaults to None (no filter).
 
@@ -137,9 +143,19 @@ class CVURepository:
             args["status"] = status
         if is_from_file is not None:
             args["is_from_file"] = is_from_file
+        if tipo is not None:
+            tipo_instance = CatalogoProducto.objects.filter(nombre=tipo).first()
+            if not tipo_instance:
+                return Result.err_from(
+                    ErrorCode.NOT_FOUND, "Tipo de producto no encontrado"
+                )
+            args["tipo"] = tipo_instance
 
         return self._get_productos_investigador(investigador_id, **args).map_value(
-            lambda productos: tuple(producto.to_checker_dto() for producto in productos)
+            lambda productos: tuple(
+                producto.to_checker_dto() if check_dto else producto.to_dto()
+                for producto in productos
+            )
         )
 
     @transaction.atomic
