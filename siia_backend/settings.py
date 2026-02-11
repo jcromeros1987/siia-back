@@ -154,3 +154,57 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 FORMS_ROOT = os.path.join(BASE_DIR, "forms")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "context_filter": {
+            "()": "cvu.logger.ContextFilter",
+        },
+    },
+    "formatters": {
+        "verbose": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] [user=%(user_id)s action=%(action)s method=%(method)s path=%(path)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        },
+        "simple": {
+            "format": "[%(asctime)s] %(levelname)s: [user=%(user_id)s action=%(action)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "level": "DEBUG",
+            "filters": ["context_filter"],
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "level": "WARNING",
+            "formatter": "verbose",
+            "filename": os.path.join(BASE_DIR, "logs", "app.log"),
+            "filters": ["context_filter"],
+        },
+        "error_file": {
+            "class": "logging.FileHandler",
+            "level": "ERROR",
+            "formatter": "verbose",
+            "filename": os.path.join(BASE_DIR, "logs", "error.log"),
+            "filters": ["context_filter"],
+        },
+    },
+    "loggers": {
+        "backend.logger": {
+            "handlers": ["console", "file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["console", "file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
