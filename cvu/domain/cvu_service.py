@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from cvu.DTOs import ProductoInvestigadorCheckerDTO
+from cvu.logger import logger
 from cvu.models import ProductoInvestigador
 from cvu.repository import CVURepository
 from cvu.serializers import PerfilCompletoSerializer
@@ -104,6 +105,9 @@ class CVUService:
                 ErrorCode.INVALID_INPUT, "No se proporcionó un ID de investigador."
             )
 
+        logger.info(
+            f"Usuario está cargando un CVU para el investigador {investigador_id}."
+        )
         try:
             cvu_data = json.load(cvu_file)
         except json.JSONDecodeError as e:
