@@ -4,6 +4,7 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import QuerySet
 
+from cvu.logger import logger
 from cvu.DTOs import CatalogoProductoDTO
 from cvu.DTOs.producto_investigador_dto import ProductoInvestigadorCheckerDTO
 from cvu.models import CatalogoProducto, User, ProductoInvestigador
@@ -256,10 +257,12 @@ class CVURepository:
                         contenido=producto_data.get("contenido"),
                         tipo=catalogo_instance,
                         investigador=investigador_instance,
+                        is_from_file=True,
                     )
                 )
             return Result.ok(productos_result)
 
+        logger.info(f"Inserting productos for investigador_id: {investigador_id}")
         nuevos_productos = []
         investigador = User.objects.filter(id=investigador_id).first()
         if not investigador:
