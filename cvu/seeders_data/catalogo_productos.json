@@ -1,0 +1,82 @@
+[
+  {
+    "nombre": "articulosCientifica",
+    "label": "Artículos Científicos"
+  },
+  {
+    "nombre": "librosCientifica",
+    "label": "Libros Científicos"
+  },
+  {
+    "nombre": "capitulosCientifica",
+    "label": "Capítulos Científicos"
+  },
+  {
+    "nombre": "articulosDifusion",
+    "label": "Artículos Difusión"
+  },
+  {
+    "nombre": "librosDifusion",
+    "label": "Libros Difusión"
+  },
+  {
+    "nombre": "capitulosDifusion",
+    "label": "Capítulos Difusión"
+  },
+  {
+    "nombre": "desarrolloTecnologicoInnovacion",
+    "label": "Desarrolo Tecnológico e Innovación"
+  },
+  {
+    "nombre": "propiedadIntelectual",
+    "label": "Propiedad Intelectual"
+  },
+  {
+    "nombre": "transferenciaTecnologica",
+    "label": "Transferencia Tecnológica"
+  },
+  {
+    "nombre": "trayectoriaAcademica",
+    "label": "Trayectoria Académica"
+  },
+  {
+    "nombre": "cursos",
+    "label": "Cursos"
+  },
+  {
+    "nombre": "certificacionesMedicas",
+    "label": "Certificaciones Médicas"
+  },
+  {
+    "nombre": "logros",
+    "label": "Logros"
+  },
+  {
+    "nombre": "idiomas",
+    "label": "Idiomas"
+  },
+  {
+    "nombre": "lenguas",
+    "label": "Lenguas"
+  },
+  {
+    "nombre": "trayectoriaProfesional",
+    "label": "Trayectoria Profesional"
+  },
+  {
+    "nombre": "evaluacionesOtorgadas",
+    "label": "Evaluaciones Otorgadas"
+  },
+  {
+    "nombre": "estancias",
+    "label": "Estancias"
+  },
+  {
+    "nombre": "cursosImpartidos",
+    "label": "Cursos Impartidos"
+  },
+  {
+    "nombre": "congresos",
+    "label": "Congresos"
+  }
+]
