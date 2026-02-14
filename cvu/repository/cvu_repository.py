@@ -6,7 +6,10 @@ from django.db.models import QuerySet
 
 from cvu.logger import logger
 from cvu.DTOs import CatalogoProductoDTO
-from cvu.DTOs.producto_investigador_dto import ProductoInvestigadorCheckerDTO
+from cvu.DTOs.producto_investigador_dto import (
+    ProductoInvestigadorCheckerDTO,
+    ProductoInvestigadorDTO,
+)
 from cvu.models import CatalogoProducto, User, ProductoInvestigador
 from cvu.serializers import ProductoInvestigadorRegisterSerializer
 from cvu.utils import Result, ErrorCode
@@ -116,6 +119,36 @@ class CVURepository:
             return Result.err_from(ErrorCode.NOT_FOUND, "Investigador no encontrado")
 
         return Result.ok(instance.to_checker_dto())
+
+    def get_muestra_producto_investigador(
+        self, tipo: str
+    ) -> Result[ProductoInvestigadorDTO]:
+        """
+        Retrieves a sample product for a given product type.
+
+        Args:
+            tipo (str): The product type name.
+        Returns:
+            Result[ProductoInvestigadorDTO]: A Result object containing:
+                - On success: A ProductoInvestigadorDTO object representing a sample product of the specified type.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the product type doesn't exist or no sample product is found.
+        """
+        tipo_instance = CatalogoProducto.objects.filter(nombre=tipo).first()
+        if not tipo_instance:
+            return Result.err_from(
+                ErrorCode.NOT_FOUND, "Tipo de producto no encontrado"
+            )
+
+        instance = ProductoInvestigador.objects.filter(
+            tipo=tipo_instance, status=True
+        ).first()
+        if not instance:
+            return Result.err_from(
+                ErrorCode.NOT_FOUND,
+                "No se encontró un producto de muestra para el tipo especificado",
+            )
+
+        return Result.ok(instance.to_dto())
 
     def get_productos_investigador(
         self,
