@@ -1,0 +1,135 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "eje": {
+        "label": "eje",
+        "order": 2
+    },
+    "apoyo": {
+        "recibioApoyoConacyt": {
+            "label": "recibioApoyoConacyt",
+            "order": 1
+        },
+        "label": "apoyo",
+        "order": 3
+    },
+    "tipoProteccion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "tipoProteccion",
+        "order": 4
+    },
+    "otraProteccion": {
+        "label": "otraProteccion",
+        "order": 5
+    },
+    "titulo": {
+        "label": "titulo",
+        "order": 6
+    },
+    "resumen": {
+        "label": "resumen",
+        "order": 7
+    },
+    "solicitantes": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "primerApellido": {
+            "label": "primerApellido",
+            "order": 2
+        },
+        "segundoApellido": {
+            "label": "segundoApellido",
+            "order": 3
+        },
+        "rol": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "rol",
+            "order": 4
+        },
+        "label": "solicitantes",
+        "order": 8,
+        "list": true
+    },
+    "rolParticipacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "rolParticipacion",
+        "order": 9
+    },
+    "otroRolParticipacion": {
+        "label": "otroRolParticipacion",
+        "order": 10
+    },
+    "numeroSolicitudMexico": {
+        "label": "numeroSolicitudMexico",
+        "order": 11
+    },
+    "fechaSolicitudMexico": {
+        "label": "fechaSolicitudMexico",
+        "order": 12
+    },
+    "solicitudInternacional": {
+        "label": "solicitudInternacional",
+        "order": 13
+    },
+    "estado": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "estado",
+        "order": 14
+    },
+    "documento": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "contentType": {
+            "label": "contentType",
+            "order": 2
+        },
+        "uri": {
+            "label": "uri",
+            "order": 3
+        },
+        "definicionDocumento": {
+            "label": "definicionDocumento",
+            "order": 4
+        },
+        "size": {
+            "label": "size",
+            "order": 5
+        },
+        "label": "documento",
+        "order": 15
+    }
+}

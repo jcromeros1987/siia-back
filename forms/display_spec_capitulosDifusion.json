@@ -1,0 +1,95 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "eje": {
+        "label": "eje",
+        "order": 2
+    },
+    "apoyo": {
+        "fondoPrograma": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "fondoPrograma",
+            "order": 1
+        },
+        "recibioApoyoConacyt": {
+            "label": "recibioApoyoConacyt",
+            "order": 2
+        },
+        "label": "apoyo",
+        "order": 3
+    },
+    "isbn": {
+        "label": "isbn",
+        "order": 4
+    },
+    "doi": {
+        "label": "doi",
+        "order": 5
+    },
+    "tituloLibro": {
+        "label": "tituloLibro",
+        "order": 6
+    },
+    "anio": {
+        "label": "anio",
+        "order": 7
+    },
+    "editorial": {
+        "label": "editorial",
+        "order": 8
+    },
+    "titulo": {
+        "label": "titulo",
+        "order": 9
+    },
+    "numero": {
+        "label": "numero",
+        "order": 10
+    },
+    "estaDictaminado": {
+        "label": "estaDictaminado",
+        "order": 11
+    },
+    "productoPrincipal": {
+        "label": "productoPrincipal",
+        "order": 12
+    },
+    "cita": {
+        "label": "cita",
+        "order": 13
+    },
+    "tipo": {
+        "label": "tipo",
+        "order": 14
+    },
+    "autores": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "primerApellido": {
+            "label": "primerApellido",
+            "order": 2
+        },
+        "orcId": {
+            "label": "orcId",
+            "order": 3
+        },
+        "orden": {
+            "label": "orden",
+            "order": 4
+        },
+        "label": "autores",
+        "order": 15,
+        "list": true
+    }
+}

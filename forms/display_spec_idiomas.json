@@ -1,0 +1,78 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "migracionId": {
+        "label": "migracionId",
+        "order": 2
+    },
+    "nombre": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "nombre",
+        "order": 3
+    },
+    "dominio": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "dominio",
+        "order": 4
+    },
+    "conversacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "conversacion",
+        "order": 5
+    },
+    "lectura": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "lectura",
+        "order": 6
+    },
+    "escritura": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "escritura",
+        "order": 7
+    },
+    "esCertificado": {
+        "label": "esCertificado",
+        "order": 8
+    },
+    "nombreInstitucion": {
+        "label": "nombreInstitucion",
+        "order": 9
+    }
+}

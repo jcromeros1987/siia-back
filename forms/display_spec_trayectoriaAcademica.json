@@ -1,0 +1,162 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "migracionId": {
+        "label": "migracionId",
+        "order": 2
+    },
+    "nivelEscolaridad": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "nivelEscolaridad",
+        "order": 3
+    },
+    "titulo": {
+        "label": "titulo",
+        "order": 4
+    },
+    "estatus": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "estatus",
+        "order": 5
+    },
+    "cedulaProfesional": {
+        "label": "cedulaProfesional",
+        "order": 6
+    },
+    "opcionTitulacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "opcionTitulacion",
+        "order": 7
+    },
+    "tituloTesis": {
+        "label": "tituloTesis",
+        "order": 8
+    },
+    "fechaObtencion": {
+        "label": "fechaObtencion",
+        "order": 9
+    },
+    "institucion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "clave": {
+            "label": "clave",
+            "order": 2
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 3
+        },
+        "tipo": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "tipo",
+            "order": 4
+        },
+        "pais": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "pais",
+            "order": 5
+        },
+        "entidad": {
+            "clave": {
+                "label": "clave",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "entidad",
+            "order": 6
+        },
+        "nivelUno": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelUno",
+            "order": 7
+        },
+        "nivelDos": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelDos",
+            "order": 8
+        },
+        "label": "institucion",
+        "order": 10
+    },
+    "documento": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "contentType": {
+            "label": "contentType",
+            "order": 2
+        },
+        "uri": {
+            "label": "uri",
+            "order": 3
+        },
+        "definicionDocumento": {
+            "label": "definicionDocumento",
+            "order": 4
+        },
+        "size": {
+            "label": "size",
+            "order": 5
+        },
+        "label": "documento",
+        "order": 11
+    }
+}

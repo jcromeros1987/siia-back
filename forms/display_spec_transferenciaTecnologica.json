@@ -1,0 +1,171 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "eje": {
+        "label": "eje",
+        "order": 2
+    },
+    "apoyo": {
+        "recibioApoyoConacyt": {
+            "label": "recibioApoyoConacyt",
+            "order": 1
+        },
+        "label": "apoyo",
+        "order": 3
+    },
+    "tipoActividad": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "tipoActividad",
+        "order": 4
+    },
+    "otraActividad": {
+        "label": "otraActividad",
+        "order": 5
+    },
+    "descripcionActividad": {
+        "label": "descripcionActividad",
+        "order": 6
+    },
+    "rolParticipacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "rolParticipacion",
+        "order": 7
+    },
+    "otroRolParticipacion": {
+        "label": "otroRolParticipacion",
+        "order": 8
+    },
+    "descripcionActividades": {
+        "label": "descripcionActividades",
+        "order": 9
+    },
+    "periodoParticipacionInicio": {
+        "label": "periodoParticipacionInicio",
+        "order": 10
+    },
+    "periodoParticipacionFin": {
+        "label": "periodoParticipacionFin",
+        "order": 11
+    },
+    "principalesResultados": {
+        "label": "principalesResultados",
+        "order": 12
+    },
+    "institucionReceptora": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "clave": {
+            "label": "clave",
+            "order": 2
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 3
+        },
+        "tipo": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "tipo",
+            "order": 4
+        },
+        "pais": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "pais",
+            "order": 5
+        },
+        "entidad": {
+            "clave": {
+                "label": "clave",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "entidad",
+            "order": 6
+        },
+        "nivelUno": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelUno",
+            "order": 7
+        },
+        "nivelDos": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelDos",
+            "order": 8
+        },
+        "label": "institucionReceptora",
+        "order": 13
+    },
+    "actoresArticulados": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "primerApellido": {
+            "label": "primerApellido",
+            "order": 2
+        },
+        "rol": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "rol",
+            "order": 3
+        },
+        "label": "actoresArticulados",
+        "order": 14,
+        "list": true
+    }
+}

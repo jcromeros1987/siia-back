@@ -1,0 +1,30 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "tipo": {
+        "label": "tipo",
+        "order": 2
+    },
+    "nombreFondo": {
+        "label": "nombreFondo",
+        "order": 3
+    },
+    "fechaAsignacion": {
+        "label": "fechaAsignacion",
+        "order": 4
+    },
+    "fechaAceptacion": {
+        "label": "fechaAceptacion",
+        "order": 5
+    },
+    "fechaEvaluacion": {
+        "label": "fechaEvaluacion",
+        "order": 6
+    },
+    "descripcion": {
+        "label": "descripcion",
+        "order": 7
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "nombre": {
+        "label": "nombre",
+        "order": 2
+    },
+    "tituloTrabajo": {
+        "label": "tituloTrabajo",
+        "order": 3
+    },
+    "tipoParticipacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "tipoParticipacion",
+        "order": 4
+    },
+    "pais": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "pais",
+        "order": 5
+    },
+    "fecha": {
+        "label": "fecha",
+        "order": 6
+    },
+    "productoPrincipal": {
+        "label": "productoPrincipal",
+        "order": 7
+    }
+}

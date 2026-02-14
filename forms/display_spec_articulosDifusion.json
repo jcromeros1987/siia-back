@@ -1,0 +1,54 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "eje": {
+        "label": "eje",
+        "order": 2
+    },
+    "apoyo": {
+        "recibioApoyoConacyt": {
+            "label": "recibioApoyoConacyt",
+            "order": 1
+        },
+        "label": "apoyo",
+        "order": 3
+    },
+    "issn": {
+        "label": "issn",
+        "order": 4
+    },
+    "issnElectronico": {
+        "label": "issnElectronico",
+        "order": 5
+    },
+    "doi": {
+        "label": "doi",
+        "order": 6
+    },
+    "nombreRevista": {
+        "label": "nombreRevista",
+        "order": 7
+    },
+    "titulo": {
+        "label": "titulo",
+        "order": 8
+    },
+    "anio": {
+        "label": "anio",
+        "order": 9
+    },
+    "productoPrincipal": {
+        "label": "productoPrincipal",
+        "order": 10
+    },
+    "cita": {
+        "label": "cita",
+        "order": 11
+    },
+    "tipo": {
+        "label": "tipo",
+        "order": 12
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "tipo": {
+        "label": "tipo",
+        "order": 2
+    },
+    "nombre": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "nombre",
+        "order": 3
+    },
+    "anio": {
+        "label": "anio",
+        "order": 4
+    }
+}

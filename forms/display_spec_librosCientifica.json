@@ -1,0 +1,183 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "eje": {
+        "label": "eje",
+        "order": 2
+    },
+    "apoyo": {
+        "fondoPrograma": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "fondoPrograma",
+            "order": 1
+        },
+        "recibioApoyoConacyt": {
+            "label": "recibioApoyoConacyt",
+            "order": 2
+        },
+        "label": "apoyo",
+        "order": 3
+    },
+    "isbn": {
+        "label": "isbn",
+        "order": 4
+    },
+    "doi": {
+        "label": "doi",
+        "order": 5
+    },
+    "titulo": {
+        "label": "titulo",
+        "order": 6
+    },
+    "anio": {
+        "label": "anio",
+        "order": 7
+    },
+    "pais": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "pais",
+        "order": 8
+    },
+    "idioma": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "idioma",
+        "order": 9
+    },
+    "editorial": {
+        "label": "editorial",
+        "order": 10
+    },
+    "isbnTraducido": {
+        "label": "isbnTraducido",
+        "order": 11
+    },
+    "idiomaTraducido": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "idiomaTraducido",
+        "order": 12
+    },
+    "tituloTraducido": {
+        "label": "tituloTraducido",
+        "order": 13
+    },
+    "rolParticipacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "rolParticipacion",
+        "order": 14
+    },
+    "estado": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "estado",
+        "order": 15
+    },
+    "objetivo": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "objetivo",
+        "order": 16
+    },
+    "estaDictaminado": {
+        "label": "estaDictaminado",
+        "order": 17
+    },
+    "productoPrincipal": {
+        "label": "productoPrincipal",
+        "order": 18
+    },
+    "cita": {
+        "urlCita": {
+            "label": "urlCita",
+            "order": 1
+        },
+        "citaA": {
+            "label": "citaA",
+            "order": 2
+        },
+        "citaB": {
+            "label": "citaB",
+            "order": 3
+        },
+        "totalCitas": {
+            "label": "totalCitas",
+            "order": 4
+        },
+        "label": "cita",
+        "order": 19
+    },
+    "tipo": {
+        "label": "tipo",
+        "order": 20
+    },
+    "autores": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "primerApellido": {
+            "label": "primerApellido",
+            "order": 2
+        },
+        "orcId": {
+            "label": "orcId",
+            "order": 3
+        },
+        "orden": {
+            "label": "orden",
+            "order": 4
+        },
+        "label": "autores",
+        "order": 21,
+        "list": true
+    }
+}

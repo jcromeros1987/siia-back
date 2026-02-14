@@ -1,0 +1,98 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "migracionId": {
+        "label": "migracionId",
+        "order": 2
+    },
+    "esActual": {
+        "label": "esActual",
+        "order": 3
+    },
+    "institucion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "clave": {
+            "label": "clave",
+            "order": 2
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 3
+        },
+        "tipo": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "tipo",
+            "order": 4
+        },
+        "pais": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "pais",
+            "order": 5
+        },
+        "entidad": {
+            "clave": {
+                "label": "clave",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "entidad",
+            "order": 6
+        },
+        "nivelUno": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelUno",
+            "order": 7
+        },
+        "nivelDos": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelDos",
+            "order": 8
+        },
+        "label": "institucion",
+        "order": 4
+    },
+    "fechaInicio": {
+        "label": "fechaInicio",
+        "order": 5
+    },
+    "nombramiento": {
+        "label": "nombramiento",
+        "order": 6
+    }
+}

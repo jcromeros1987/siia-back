@@ -1,0 +1,118 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "institucion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "clave": {
+            "label": "clave",
+            "order": 2
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 3
+        },
+        "tipo": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "tipo",
+            "order": 4
+        },
+        "pais": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "pais",
+            "order": 5
+        },
+        "entidad": {
+            "clave": {
+                "label": "clave",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "entidad",
+            "order": 6
+        },
+        "nivelUno": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelUno",
+            "order": 7
+        },
+        "nivelDos": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelDos",
+            "order": 8
+        },
+        "label": "institucion",
+        "order": 2
+    },
+    "nombre": {
+        "label": "nombre",
+        "order": 3
+    },
+    "fechaInicio": {
+        "label": "fechaInicio",
+        "order": 4
+    },
+    "fechaFin": {
+        "label": "fechaFin",
+        "order": 5
+    },
+    "tipo": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "tipo",
+        "order": 6
+    },
+    "logros": {
+        "label": "logros",
+        "order": 7
+    },
+    "scian": {
+        "label": "scian",
+        "order": 8
+    },
+    "ocde": {
+        "label": "ocde",
+        "order": 9
+    }
+}

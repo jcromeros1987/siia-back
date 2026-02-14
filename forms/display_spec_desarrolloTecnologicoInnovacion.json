@@ -1,0 +1,183 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "eje": {
+        "label": "eje",
+        "order": 2
+    },
+    "apoyo": {
+        "recibioApoyoConacyt": {
+            "label": "recibioApoyoConacyt",
+            "order": 1
+        },
+        "label": "apoyo",
+        "order": 3
+    },
+    "producto": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "producto",
+        "order": 4
+    },
+    "nombre": {
+        "label": "nombre",
+        "order": 5
+    },
+    "tipoDesarrollo": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "tipoDesarrollo",
+        "order": 6
+    },
+    "descripcionDesarrollo": {
+        "label": "descripcionDesarrollo",
+        "order": 7
+    },
+    "objetivosDesarollo": {
+        "label": "objetivosDesarollo",
+        "order": 8
+    },
+    "problemaAtiende": {
+        "label": "problemaAtiende",
+        "order": 9
+    },
+    "numeroPersonas": {
+        "label": "numeroPersonas",
+        "order": 10
+    },
+    "justificacionBeneficiarios": {
+        "label": "justificacionBeneficiarios",
+        "order": 11
+    },
+    "generacionValorImpacto": {
+        "label": "generacionValorImpacto",
+        "order": 12
+    },
+    "scian": {
+        "label": "scian",
+        "order": 13
+    },
+    "ocde": {
+        "label": "ocde",
+        "order": 14
+    },
+    "recibioApoyoConacyt": {
+        "label": "recibioApoyoConacyt",
+        "order": 15
+    },
+    "fondoPrograma": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "fondoPrograma",
+        "order": 16
+    },
+    "descripcionApoyo": {
+        "label": "descripcionApoyo",
+        "order": 17
+    },
+    "tituloProyectoApoyado": {
+        "label": "tituloProyectoApoyado",
+        "order": 18
+    },
+    "numeroProyectoApoyado": {
+        "label": "numeroProyectoApoyado",
+        "order": 19
+    },
+    "nivelMadurez": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "nivelMadurez",
+        "order": 20
+    },
+    "otrosResultados": {
+        "label": "otrosResultados",
+        "order": 21
+    },
+    "rolParticipacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "rolParticipacion",
+        "order": 22
+    },
+    "otroRolParticipacion": {
+        "label": "otroRolParticipacion",
+        "order": 23
+    },
+    "descripcionActividades": {
+        "label": "descripcionActividades",
+        "order": 24
+    },
+    "periodoParticipacionInicio": {
+        "label": "periodoParticipacionInicio",
+        "order": 25
+    },
+    "periodoParticipacionFin": {
+        "label": "periodoParticipacionFin",
+        "order": 26
+    },
+    "principalesResultados": {
+        "label": "principalesResultados",
+        "order": 27
+    },
+    "actoresArticulados": {
+        "nombre": {
+            "label": "nombre",
+            "order": 1
+        },
+        "primerApellido": {
+            "label": "primerApellido",
+            "order": 2
+        },
+        "segundoApellido": {
+            "label": "segundoApellido",
+            "order": 3
+        },
+        "rol": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "rol",
+            "order": 4
+        },
+        "label": "actoresArticulados",
+        "order": 28,
+        "list": true
+    }
+}

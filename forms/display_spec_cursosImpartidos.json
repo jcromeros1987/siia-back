@@ -1,0 +1,58 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "tipoPrograma": {
+        "label": "tipoPrograma",
+        "order": 2
+    },
+    "claveInstitucionSnp": {
+        "label": "claveInstitucionSnp",
+        "order": 3
+    },
+    "programaSnp": {
+        "claveSede": {
+            "label": "claveSede",
+            "order": 1
+        },
+        "claveDependencia": {
+            "label": "claveDependencia",
+            "order": 2
+        },
+        "referenciaPrograma": {
+            "label": "referenciaPrograma",
+            "order": 3
+        },
+        "label": "programaSnp",
+        "order": 4
+    },
+    "nombreCurso": {
+        "label": "nombreCurso",
+        "order": 5
+    },
+    "horasTotales": {
+        "label": "horasTotales",
+        "order": 6
+    },
+    "fechaInicio": {
+        "label": "fechaInicio",
+        "order": 7
+    },
+    "fechaFin": {
+        "label": "fechaFin",
+        "order": 8
+    },
+    "nivelEscolaridad": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "nivelEscolaridad",
+        "order": 9
+    }
+}

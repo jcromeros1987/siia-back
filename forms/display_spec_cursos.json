@@ -1,0 +1,106 @@
+{
+    "id": {
+        "label": "id",
+        "order": 1
+    },
+    "formacion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 2
+        },
+        "label": "formacion",
+        "order": 2
+    },
+    "nombre": {
+        "label": "nombre",
+        "order": 3
+    },
+    "anio": {
+        "label": "anio",
+        "order": 4
+    },
+    "horasTotales": {
+        "label": "horasTotales",
+        "order": 5
+    },
+    "institucion": {
+        "id": {
+            "label": "id",
+            "order": 1
+        },
+        "clave": {
+            "label": "clave",
+            "order": 2
+        },
+        "nombre": {
+            "label": "nombre",
+            "order": 3
+        },
+        "tipo": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "tipo",
+            "order": 4
+        },
+        "pais": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "pais",
+            "order": 5
+        },
+        "entidad": {
+            "clave": {
+                "label": "clave",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "entidad",
+            "order": 6
+        },
+        "nivelUno": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelUno",
+            "order": 7
+        },
+        "nivelDos": {
+            "id": {
+                "label": "id",
+                "order": 1
+            },
+            "nombre": {
+                "label": "nombre",
+                "order": 2
+            },
+            "label": "nivelDos",
+            "order": 8
+        },
+        "label": "institucion",
+        "order": 6
+    }
+}

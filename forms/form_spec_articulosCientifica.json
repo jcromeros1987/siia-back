@@ -1,0 +1,162 @@
+{
+    "eje": {
+        "type": "text",
+        "final": true,
+        "order": 1,
+        "required": true,
+        "invalid_feedback": "Este campo es requerido"
+    },
+    "apoyo": {
+        "recibioApoyoConacyt": {
+            "type": "checkbox",
+            "final": true,
+            "order": 2,
+            "required": false,
+            "invalid_feedback": ""
+        }
+    },
+    "issn": {
+        "type": "text",
+        "final": true,
+        "order": 3,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "issnElectronico": {
+        "type": "text",
+        "final": true,
+        "order": 4,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "doi": {
+        "type": "text",
+        "final": true,
+        "order": 5,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "nombreRevista": {
+        "type": "text",
+        "final": true,
+        "order": 6,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "titulo": {
+        "type": "text",
+        "final": true,
+        "order": 7,
+        "required": true,
+        "invalid_feedback": "Este campo es requerido"
+    },
+    "anio": {
+        "type": "text",
+        "final": true,
+        "order": 8,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "productoPrincipal": {
+        "type": "checkbox",
+        "final": true,
+        "order": 9,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "rolParticipacion": {
+        "nombre": {
+            "type": "text",
+            "final": true,
+            "order": 10,
+            "required": false,
+            "invalid_feedback": ""
+        }
+    },
+    "estado": {
+        "nombre": {
+            "type": "text",
+            "final": true,
+            "order": 11,
+            "required": false,
+            "invalid_feedback": ""
+        }
+    },
+    "objetivo": {
+        "nombre": {
+            "type": "text",
+            "final": true,
+            "order": 12,
+            "required": false,
+            "invalid_feedback": ""
+        }
+    },
+    "cita": {
+        "urlCita": {
+            "type": "text",
+            "final": true,
+            "order": 13,
+            "required": false,
+            "invalid_feedback": ""
+        },
+        "citaA": {
+            "type": "number",
+            "final": true,
+            "order": 14,
+            "required": false,
+            "invalid_feedback": "El valor debe ser un n\u00famero entero"
+        },
+        "citaB": {
+            "type": "number",
+            "final": true,
+            "order": 15,
+            "required": false,
+            "invalid_feedback": "El valor debe ser un n\u00famero entero"
+        },
+        "totalCitas": {
+            "type": "number",
+            "final": true,
+            "order": 16,
+            "required": false,
+            "invalid_feedback": "El valor debe ser un n\u00famero entero"
+        }
+    },
+    "tipo": {
+        "type": "text",
+        "final": true,
+        "order": 17,
+        "required": false,
+        "invalid_feedback": ""
+    },
+    "autores": {
+        "nombre": {
+            "type": "text",
+            "final": true,
+            "order": 18,
+            "required": false,
+            "invalid_feedback": ""
+        },
+        "primerApellido": {
+            "type": "text",
+            "final": true,
+            "order": 19,
+            "required": false,
+            "invalid_feedback": ""
+        },
+        "orcId": {
+            "type": "text",
+            "final": true,
+            "order": 20,
+            "required": false,
+            "invalid_feedback": ""
+        },
+        "orden": {
+            "type": "number",
+            "final": true,
+            "order": 21,
+            "required": false,
+            "invalid_feedback": "El valor debe ser un n\u00famero entero"
+        },
+        "list": true
+    }
+}
