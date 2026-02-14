@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import environ
 import os
@@ -112,8 +113,9 @@ DATABASES = {
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-siiacache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_CACHE_LOCATION"),
+        "KEY_PREFIX": "siia_backend_cache",
     }
 }
 
@@ -208,4 +210,13 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "UPDATE_LAST_LOGIN": True,
+    "LEEWAY": timedelta(minutes=1),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
