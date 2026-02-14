@@ -39,6 +39,39 @@ class CVUView(ViewSet):
     service = CVUService()
     http_method_names = ["post", "get", "patch"]
 
+    def retrieve(self, request, pk, *args, **kwargs):
+        """
+        Endpoint para obtener el CVU completo de un usuario específico.
+
+        Permite recuperar toda la información del CVU de un investigador, incluyendo
+        sus datos personales, productos académicos, y cualquier otra información relevante.
+
+        Args:
+            request (Request): Objeto de solicitud HTTP de Django REST Framework.
+                - query_params['usuario']: ID del usuario cuyo CVU se desea obtener.
+            *args: Argumentos posicionales adicionales.
+            **kwargs: Argumentos de palabra clave adicionales.
+
+        Returns:
+            Response: Respuesta HTTP con el resultado de la operación.
+                - 200 OK: Si el CVU se obtuvo correctamente.
+                    Formato: {'message': 'CVU obtenido correctamente', 'data': <datos del CVU>}
+                - 400 BAD REQUEST: Si el usuario no existe o hay error en la recuperación del CVU.
+                    Formato: {'message': 'Error al obtener CVU', 'data': <detalle del error>}
+        """
+        user_instance = User.objects.filter(id=pk).first()
+        if not user_instance:
+            return Response(
+                {"message": "Usuario no encontrado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        cvu_data = self.service.get_productos_investigador(user_instance.id)
+        return Response(
+            {"message": "CVU obtenido correctamente", "data": cvu_data},
+            status=status.HTTP_200_OK,
+        )
+
     def create(self, request, *args, **kwargs):
         """
         Carga y procesa un archivo CVU para un usuario específico.
@@ -194,7 +227,7 @@ class CVUView(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        type_instance = CatalogoProducto.objects.filter(label=product_type).first()
+        type_instance = CatalogoProducto.objects.filter(nombre=product_type).first()
         if not type_instance:
             return Response(
                 {"message": "Tipo de producto no válido."},
