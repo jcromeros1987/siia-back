@@ -128,7 +128,7 @@ class CVUService:
         productos = {}
         products_types_dtos = self.cvu_repository.get_catalogo_productos().unwrap()
 
-        products_names_dict = {dto.label: dto.nombre for dto in products_types_dtos}
+        products_names_dict = {dto.nombre: dto.label for dto in products_types_dtos}
         products_names = [dto.nombre for dto in products_types_dtos]
 
         for producto_type in products_names:
@@ -148,7 +148,7 @@ class CVUService:
     def get_form_data(self, product_type: str) -> dict:
         """Analiza el contenido de un producto en formato JSON y devuelve un diccionario con los datos del formulario
         que pueden ser utilizados para llenar los campos de un formulario en una interfaz de usuario."""
-        product = ProductoInvestigador.objects.filter(tipo__valor=product_type).first()
+        product = ProductoInvestigador.objects.filter(tipo__nombre=product_type).first()
         if not product:
             return {}
 
@@ -191,16 +191,15 @@ class CVUService:
         return f"display_spec_{product_type}"
 
     def gen_display_data(self):
-        for tipo in self.catalogo_tipos:
-            key = self.get_key_display_spec(tipo.valor)
+        for tipo in self.cvu_repository.get_catalogo_productos().unwrap():
+            key = self.get_key_display_spec(tipo.nombre)
             # if key in cache:
             #     continue
-            muestra = ProductoInvestigador.objects.filter(
-                tipo=tipo, status=True
-            ).first()
-            if not muestra:
+
+            muestra = self.cvu_repository.get_muestra_producto_investigador(tipo.nombre)
+            if muestra.is_err():
                 continue
-            display_data, order = self._get_display_data(muestra.contenido, {})
+            display_data, order = self._get_display_data(muestra.unwrap().contenido, {})
             cache.set(key, display_data, timeout=None)
             with open(os.path.join(settings.FORMS_ROOT, f"{key}.json"), "w") as f:
                 json.dump(display_data, f, indent=4)
@@ -221,12 +220,13 @@ class CVUService:
                     display_data[key] = temp_display
                     current_order += 1
                 case list():
-                    temp_display, _ = self._get_display_data(value[0], {})
-                    temp_display["label"] = key
-                    temp_display["order"] = current_order
-                    temp_display["list"] = True
-                    current_order += 1
-                    display_data[key] = temp_display
+                    if len(value) > 0 and isinstance(value[0], dict):
+                        temp_display, _ = self._get_display_data(value[0], {})
+                        temp_display["label"] = key
+                        temp_display["order"] = current_order
+                        temp_display["list"] = True
+                        current_order += 1
+                        display_data[key] = temp_display
 
         return display_data, current_order
 
