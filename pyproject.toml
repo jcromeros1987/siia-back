@@ -16,6 +16,7 @@ dependencies = [
     "pytest-watcher==0.6.3",
     "django-seeding==1.3.6",
     "pandas==3.0.0",
+    "redis==7.1.1"
 ]
 
 [tool.ruff.lint.per-file-ignores]
