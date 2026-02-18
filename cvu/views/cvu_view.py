@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -67,8 +69,13 @@ class CVUView(ViewSet):
             )
 
         cvu_data = self.service.get_productos_investigador(user_instance.id)
+        user_data = self.service.get_perfil_usuario(user_instance.id)
         return Response(
-            {"message": "CVU obtenido correctamente", "data": cvu_data},
+            {
+                "message": "CVU obtenido correctamente",
+                "user_data": asdict(user_data.unwrap()),
+                "data": cvu_data,
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -181,21 +188,22 @@ class CVUView(ViewSet):
         data = request.data.get("data")
         id_entry = request.data.get("id")
 
-        success, data = self.service.update_entry(id_entry, data, tipo, request.user)
-        if success:
+        result = self.service.update_entry(id_entry, data, tipo, request.user.id)
+        if result.is_err():
             return Response(
                 {
-                    "message": "Producto de investigador actualizado correctamente",
-                    "data": data,
+                    "message": "Error al actualizar el producto de investigador",
+                    "data": result.unwrap(),
                 },
-                status=status.HTTP_200_OK,
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
         return Response(
             {
-                "message": "Error al actualizar el producto de investigador",
-                "data": data,
+                "message": "Producto de investigador actualizado correctamente",
+                "data": asdict(result.unwrap()),
             },
-            status=status.HTTP_400_BAD_REQUEST,
+            status=status.HTTP_200_OK,
         )
 
     @action(detail=False, methods=["get"], url_path="form/(?P<product_type>[^/.]+)")
