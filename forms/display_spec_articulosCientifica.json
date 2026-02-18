@@ -122,6 +122,6 @@
         },
         "label": "autores",
         "order": 16,
-        "list": true
+        "list": false
     }
 }
