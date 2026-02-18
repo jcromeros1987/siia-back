@@ -133,7 +133,10 @@ class CVUService:
 
         for producto_type in products_names:
             productos_instances = self.cvu_repository.get_productos_investigador(
-                investigador_id=investigador_id, tipo=producto_type, status=True
+                investigador_id=investigador_id,
+                tipo=producto_type,
+                status=True,
+                check_dto=False,
             ).unwrap_or([])
             productos[producto_type] = {
                 "nombre": products_names_dict[producto_type],
