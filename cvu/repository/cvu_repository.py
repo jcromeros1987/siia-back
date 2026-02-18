@@ -5,13 +5,16 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from cvu.logger import logger
-from cvu.DTOs import CatalogoProductoDTO
+from cvu.DTOs import CatalogoProductoDTO, PerfilUsuarioDTO
 from cvu.DTOs.producto_investigador_dto import (
     ProductoInvestigadorCheckerDTO,
     ProductoInvestigadorDTO,
 )
-from cvu.models import CatalogoProducto, User, ProductoInvestigador
-from cvu.serializers import ProductoInvestigadorRegisterSerializer
+from cvu.models import CatalogoProducto, User, ProductoInvestigador, PerfilUsuario
+from cvu.serializers import (
+    ProductoInvestigadorRegisterSerializer,
+    PerfilUsuarioRegisterSerializer,
+)
 from cvu.utils import Result, ErrorCode
 
 
@@ -323,3 +326,127 @@ class CVURepository:
         )
 
         return Result.ok(productos)
+
+    @transaction.atomic
+    def create_or_update_perfil_usuario(
+        self, investigador_id: UUID, data: dict
+    ) -> Result[PerfilUsuarioDTO]:
+        """
+        Creates or updates a user profile for a researcher.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+            data (dict): The profile data to save.
+
+        Returns:
+            Result[PerfilUsuarioDTO]: A Result object containing:
+                - On success: A PerfilUsuarioDTO object for the created/updated profile.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher doesn't exist,
+                  or ErrorCode.VALIDATION_ERROR if the data is invalid.
+        """
+        investigador = User.objects.filter(id=investigador_id).first()
+        if not investigador:
+            return Result.err_from(ErrorCode.NOT_FOUND, "Investigador no encontrado")
+
+        data["usuario"] = investigador.id
+
+        # Try to get existing profile
+        perfil = PerfilUsuario.objects.filter(usuario=investigador).first()
+
+        serializer = PerfilUsuarioRegisterSerializer(perfil, data=data, partial=True)
+
+        if not serializer.is_valid():
+            return Result.err_from(
+                ErrorCode.VALIDATION_ERROR, "Error de validación", serializer.errors
+            )
+
+        saved_perfil = serializer.save()
+
+        return Result.ok(self._perfil_to_dto(saved_perfil))
+
+    def get_perfil_usuario(self, investigador_id: UUID) -> Result[PerfilUsuarioDTO]:
+        """
+        Retrieves the profile for a researcher.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+
+        Returns:
+            Result[PerfilUsuarioDTO]: A Result object containing:
+                - On success: A PerfilUsuarioDTO object for the requested profile.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher or profile doesn't exist.
+        """
+        investigador = User.objects.filter(id=investigador_id).first()
+        if not investigador:
+            return Result.err_from(ErrorCode.NOT_FOUND, "Investigador no encontrado")
+
+        perfil = PerfilUsuario.objects.filter(usuario=investigador).first()
+        if not perfil:
+            return Result.err_from(
+                ErrorCode.NOT_FOUND, "Perfil de usuario no encontrado"
+            )
+
+        return Result.ok(self._perfil_to_dto(perfil))
+
+    def delete_perfil_usuario(self, investigador_id: UUID) -> Result[str]:
+        """
+        Deletes the profile for a researcher.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+
+        Returns:
+            Result[str]: A Result object containing:
+                - On success: A success message "Perfil eliminado".
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher or profile doesn't exist.
+        """
+        investigador = User.objects.filter(id=investigador_id).first()
+        if not investigador:
+            return Result.err_from(ErrorCode.NOT_FOUND, "Investigador no encontrado")
+
+        perfil = PerfilUsuario.objects.filter(usuario=investigador).first()
+        if not perfil:
+            return Result.err_from(
+                ErrorCode.NOT_FOUND, "Perfil de usuario no encontrado"
+            )
+
+        perfil.delete()
+        return Result.ok("Perfil eliminado")
+
+    def _perfil_to_dto(self, perfil: PerfilUsuario) -> PerfilUsuarioDTO:
+        """Converts a PerfilUsuario model instance to a DTO."""
+        fotografia = None
+        if perfil.fotografia_uri:
+            fotografia = {
+                "nombre": perfil.fotografia_nombre,
+                "contentType": perfil.fotografia_content_type,
+                "uri": perfil.fotografia_uri,
+            }
+
+        return PerfilUsuarioDTO(
+            id=perfil.id,
+            usuario_id=perfil.usuario.id,
+            cvu=perfil.cvu,
+            nivel_academico=perfil.nivel_academico,
+            titulo=perfil.titulo,
+            fotografia=fotografia,
+            semblanza=perfil.semblanza,
+            linkedin=perfil.linkedin,
+            orcid=perfil.orcid,
+            correo_alternativo=perfil.correo_alternativo,
+            curp=perfil.curp,
+            rfc=perfil.rfc,
+            fecha_nacimiento=perfil.fecha_nacimiento.isoformat()
+            if perfil.fecha_nacimiento
+            else None,
+            intereses=perfil.intereses or [],
+            habilidades=perfil.habilidades or [],
+            sexo=perfil.sexo,
+            pais_nacimiento=perfil.pais_nacimiento,
+            entidad_federativa=perfil.entidad_federativa,
+            estado_civil=perfil.estado_civil,
+            nacionalidad=perfil.nacionalidad,
+            area_conocimiento=perfil.area_conocimiento,
+            fecha_creacion=perfil.fecha_creacion.isoformat(),
+            fecha_modificacion=perfil.fecha_modificacion.isoformat(),
+        )
