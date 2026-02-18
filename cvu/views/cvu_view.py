@@ -142,16 +142,16 @@ class CVUView(ViewSet):
         """
         tipo = request.data.get("tipo")
         data = request.data.get("data")
-        success, data = self.service.create_new_entry(data, tipo, request.user)
-        if success:
+        result = self.service.create_new_entry(data, tipo, request.user.id)
+        if result.is_err():
             return Response(
-                {"message": "Entrada creada correctamente", "data": data},
-                status=status.HTTP_201_CREATED,
+                {"message": "Error al crear entrada", "data": result.unwrap()},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         return Response(
-            {"message": "Error al crear entrada", "data": data},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"message": "Entrada creada correctamente", "data": result.unwrap()},
+            status=status.HTTP_201_CREATED,
         )
 
     @action(detail=False, methods=["patch"], url_path="update-entry")
