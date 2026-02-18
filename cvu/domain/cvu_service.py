@@ -7,7 +7,7 @@ from uuid import UUID
 from django.conf import settings
 from django.core.cache import cache
 
-from cvu.DTOs import ProductoInvestigadorCheckerDTO
+from cvu.DTOs import ProductoInvestigadorCheckerDTO, PerfilUsuarioDTO
 from cvu.logger import logger
 from cvu.models import ProductoInvestigador
 from cvu.repository import CVURepository
@@ -114,7 +114,12 @@ class CVUService:
             return Result.err_from(ErrorCode.INVALID_INPUT, str(e))
 
         serializer = PerfilCompletoSerializer(instance=cvu_data)
-        productos = self._get_productos_investigador(serializer.data)
+        serialized_data = serializer.data
+        productos = self._get_productos_investigador(serialized_data)
+
+        # Extract profile data from the serialized CVU data
+        perfil_data = self.extract_perfil_from_cvu(serialized_data)
+        self.save_perfil_usuario(investigador_id, perfil_data)
 
         return self.cvu_repository.delete_productos_investigador(
             investigador_id, status=True, is_from_file=True, logic=True
@@ -306,3 +311,90 @@ class CVUService:
                 productos[key] = value
             elif isinstance(value, dict):
                 self._get_productos_investigador_aux(value, tipos, productos)
+
+    # ==================== Métodos para PerfilUsuario ====================
+
+    def save_perfil_usuario(
+        self, investigador_id: UUID, data: dict
+    ) -> Result[PerfilUsuarioDTO]:
+        """
+        Saves or updates the user profile information for a researcher.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+            data (dict): The profile data to save, following the PrincipalSerializer structure.
+
+        Returns:
+            Result[PerfilUsuarioDTO]: A Result object containing:
+                - On success: A PerfilUsuarioDTO object with the saved profile data.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher doesn't exist,
+                  or ErrorCode.VALIDATION_ERROR if the data is invalid.
+        """
+        logger.info(f"Saving profile for investigador_id: {investigador_id}")
+        return self.cvu_repository.create_or_update_perfil_usuario(
+            investigador_id, data
+        )
+
+    def get_perfil_usuario(self, investigador_id: UUID) -> Result[PerfilUsuarioDTO]:
+        """
+        Retrieves the user profile information for a researcher.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+
+        Returns:
+            Result[PerfilUsuarioDTO]: A Result object containing:
+                - On success: A PerfilUsuarioDTO object with the profile data.
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher or profile doesn't exist.
+        """
+        logger.info(f"Retrieving profile for investigador_id: {investigador_id}")
+        return self.cvu_repository.get_perfil_usuario(investigador_id)
+
+    def delete_perfil_usuario(self, investigador_id: UUID) -> Result[str]:
+        """
+        Deletes the user profile for a researcher.
+
+        Args:
+            investigador_id (UUID): The researcher's unique identifier.
+
+        Returns:
+            Result[str]: A Result object containing:
+                - On success: A success message "Perfil eliminado".
+                - On failure: An error Result with ErrorCode.NOT_FOUND if the researcher or profile doesn't exist.
+        """
+        logger.info(f"Deleting profile for investigador_id: {investigador_id}")
+        return self.cvu_repository.delete_perfil_usuario(investigador_id)
+
+    def extract_perfil_from_cvu(self, cvu_data: dict) -> dict:
+        """
+        Extracts the principal/profile information from a complete CVU data structure.
+
+        Args:
+            cvu_data (dict): The complete CVU data structure.
+
+        Returns:
+            dict: A dictionary containing the principal profile information.
+        """
+        perfil_data = cvu_data.get("perfil", {})
+        principal_data = perfil_data.get("principal", {})
+
+        return {
+            "cvu": perfil_data.get("cvu"),
+            "nivel_academico": perfil_data.get("nivelAcademico"),
+            "titulo": perfil_data.get("titulo"),
+            "fotografia": principal_data.get("fotografia"),
+            "semblanza": principal_data.get("semblanza"),
+            "linkedin": principal_data.get("linkedin"),
+            "orcid": principal_data.get("orcId"),
+            "intereses": principal_data.get("intereses", []),
+            "habilidades": principal_data.get("habilidades", []),
+            "curp": principal_data.get("curp"),
+            "rfc": principal_data.get("rfc"),
+            "fecha_nacimiento": principal_data.get("fechaNacimiento"),
+            "sexo": principal_data.get("sexo"),
+            "pais_nacimiento": principal_data.get("paisNacimiento"),
+            "entidad_federativa": principal_data.get("entidadFederativa"),
+            "estado_civil": principal_data.get("estadoCivil"),
+            "nacionalidad": principal_data.get("nacionalidad"),
+            "area_conocimiento": principal_data.get("areaConocimiento"),
+        }
