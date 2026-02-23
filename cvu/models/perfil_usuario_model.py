@@ -19,6 +19,9 @@ class PerfilUsuario(models.Model):
     cvu = models.CharField(max_length=128, null=True, blank=True)
     nivel_academico = models.CharField(max_length=255, null=True, blank=True)
     titulo = models.CharField(max_length=512, null=True, blank=True)
+    nombre = models.CharField(max_length=255, null=True, blank=True)
+    primer_apellido = models.CharField(max_length=255, null=True, blank=True)
+    segundo_apellido = models.CharField(max_length=255, null=True, blank=True)
 
     # Información Personal (fotografía y semblanza)
     fotografia_nombre = models.CharField(max_length=512, null=True, blank=True)
@@ -68,6 +71,9 @@ class PerfilUsuario(models.Model):
             "cvu": self.cvu,
             "nivel_academico": self.nivel_academico,
             "titulo": self.titulo,
+            "nombre": self.nombre,
+            "primer_apellido": self.primer_apellido,
+            "segundo_apellido": self.segundo_apellido,
             "fotografia": {
                 "nombre": self.fotografia_nombre,
                 "contentType": self.fotografia_content_type,
