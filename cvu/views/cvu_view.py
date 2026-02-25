@@ -70,6 +70,11 @@ class CVUView(ViewSet):
 
         cvu_data = self.service.get_productos_investigador(user_instance.id)
         user_data = self.service.get_perfil_usuario(user_instance.id)
+        if user_data.is_err():
+            return Response(
+                {"message": "Error al obtener datos del usuario.", "data": cvu_data},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(
             {
                 "message": "CVU obtenido correctamente",
