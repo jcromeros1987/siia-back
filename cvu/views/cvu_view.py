@@ -11,6 +11,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from cvu.logger import logger
 from cvu.domain import CVUService
 from cvu.models import User, CatalogoProducto
+from cvu.utils import ErrorCode
 
 
 class CVUView(ViewSet):
@@ -71,8 +72,13 @@ class CVUView(ViewSet):
         cvu_data = self.service.get_productos_investigador(user_instance.id)
         user_data = self.service.get_perfil_usuario(user_instance.id)
         if user_data.is_err():
+            if user_data.get_error().code == ErrorCode.NOT_FOUND:
+                return Response(
+                    {"message": "Perfil de usuario no encontrado."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return Response(
-                {"message": "Error al obtener datos del usuario.", "data": cvu_data},
+                {"message": user_data.get_error().message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(
