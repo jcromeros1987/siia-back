@@ -7,6 +7,7 @@ User = get_user_model()
 class Command(BaseCommand):
     help = "Creates a new regular user (not superuser)"
 
+    #uv run manage.py create_user admin@planeacion.com.mx "Admin" --first-apellido "Planeacion" --second-apellido "UNAM" --password "12345"
     def add_arguments(self, parser):
         parser.add_argument("email", type=str, help="Email address for the user")
         parser.add_argument("name", type=str, help="First name of the user")

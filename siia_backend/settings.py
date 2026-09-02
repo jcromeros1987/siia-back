@@ -20,7 +20,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
-environ.Env.read_env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -100,14 +100,28 @@ AUTH_USER_MODEL = "cvu.User"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+_DB_ENGINES = {
+    "pgsql": "django.db.backends.postgresql",
+    "postgres": "django.db.backends.postgresql",
+    "postgresql": "django.db.backends.postgresql",
+    "mysql": "django.db.backends.mysql",
+}
+
+_db_connection = env("DB_CONNECTION", default="pgsql").lower()
+_db_search_path = env("DB_SEARCH_PATH", default="app_cargas_masivas,pubindex")
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": env("DB_NAME"),
-        "USER": env("DB_USER"),
+        "ENGINE": _DB_ENGINES.get(_db_connection, "django.db.backends.postgresql"),
+        "NAME": env("DB_DATABASE", default="") or env("DB_NAME"),
+        "USER": env("DB_USERNAME", default="") or env("DB_USER"),
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
+        "DISABLE_SERVER_SIDE_CURSORS": True,
+        "OPTIONS": {
+            "options": f"-c search_path={_db_search_path}",
+        },
     }
 }
 

@@ -1,0 +1,27 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: host.docker.internal
+      DB_PORT: "5433"
+      REDIS_CACHE_LOCATION: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_started
+    command: >
+      sh -c "mkdir -p logs &&
+             uv run python manage.py migrate &&
+             uv run python manage.py seed &&
+             uv run python manage.py load_form_data &&
+             uv run python manage.py runserver 0.0.0.0:8000"
