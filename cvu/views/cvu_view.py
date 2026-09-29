@@ -1,257 +1,786 @@
+# ============================================================
+# IMPORTACIONES
+# ============================================================
+
+# asdict permite convertir objetos tipo dataclass a diccionarios.
+#
+# Se utiliza posteriormente cuando necesitamos regresar
+# información de un DTO dentro de una respuesta HTTP.
 from dataclasses import asdict
 
+
+# Importamos los códigos de estado HTTP que utiliza Django REST
+# Framework para construir las respuestas.
+#
+# Ejemplos:
+#
+# status.HTTP_200_OK
+# status.HTTP_201_CREATED
+# status.HTTP_400_BAD_REQUEST
+# status.HTTP_404_NOT_FOUND
 from rest_framework import status
+
+
+# "action" permite crear endpoints adicionales dentro de un
+# ViewSet.
+#
+# Por ejemplo:
+#
+# /api/v1/cvu/create-entry/
+# /api/v1/cvu/update-entry/
+# /api/v1/cvu/form/<product_type>/
 from rest_framework.decorators import action
+
+
+# Permiso que obliga a que el usuario esté autenticado para
+# poder acceder a los endpoints del CVU.
 from rest_framework.permissions import IsAuthenticated
+
+
+# Response es la respuesta HTTP que devolveremos al frontend.
 from rest_framework.response import Response
+
+
+# ViewSet es la clase base utilizada para crear el controlador
+# del módulo CVU.
 from rest_framework.viewsets import ViewSet
 
+
+# Autenticación mediante JSON Web Token (JWT).
+#
+# El frontend envía el token mediante:
+#
+# Authorization: Bearer <access_token>
+#
+# y Django REST Framework utiliza esta clase para identificar
+# al usuario autenticado.
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+
+# Logger utilizado para registrar acontecimientos importantes
+# durante la ejecución del backend.
 from cvu.logger import logger
+
+
+# Servicio principal del módulo CVU.
+#
+# CVUView se encarga de HTTP.
+# CVUService se encarga de la lógica de negocio.
 from cvu.domain import CVUService
+
+
+# Modelos utilizados directamente por este ViewSet.
+#
+# User:
+#   Representa al usuario/investigador.
+#
+# CatalogoProducto:
+#   Catálogo que contiene los diferentes tipos de productos
+#   académicos del CVU.
 from cvu.models import User, CatalogoProducto
+
+
+# ErrorCode contiene los códigos utilizados por el objeto
+# Result para identificar diferentes tipos de errores.
 from cvu.utils import ErrorCode
 
 
+# ============================================================
+# VIEWSET DEL CVU
+# ============================================================
+
 class CVUView(ViewSet):
     """
-    ViewSet para manejar operaciones relacionadas con el CVU (Currículum Vitae Único) de los usuarios.
+    ViewSet para manejar operaciones relacionadas con el CVU
+    (Currículum Vitae Único) de los usuarios.
 
-    Este ViewSet proporciona endpoints para la gestión completa del CVU de investigadores,
-    incluyendo la carga de archivos CVU, creación y actualización de entradas individuales,
-    y la obtención de especificaciones de formularios para diferentes tipos de productos académicos.
+    Este ViewSet funciona como la capa HTTP del módulo CVU.
 
-    Attributes:
-        authentication_classes (list): Lista de clases de autenticación. Utiliza autenticación
-            basada en cookies (CookieTokenAuthentication).
-        permission_classes (list): Lista de clases de permisos requeridos. El usuario debe
-            estar autenticado y haber aceptado la política de privacidad.
-        service (CVUService): Instancia del servicio CVU para operaciones de negocio.
-        http_method_names (list): Métodos HTTP permitidos: POST, GET y PATCH.
+    Su responsabilidad principal es:
 
-    Endpoints:
-        - POST /api/cvu/: Carga y procesa un archivo CVU completo.
-        - POST /api/cvu/create-entry/: Crea una nueva entrada en el CVU.
-        - PATCH /api/cvu/update-entry/: Actualiza una entrada existente en el CVU.
-        - GET api/cvu/form/<product_type>/: Obtiene las especificaciones del formulario para un tipo de producto.
+    - Recibir peticiones del frontend.
+    - Obtener parámetros de la petición.
+    - Validar información básica.
+    - Invocar al CVUService.
+    - Convertir los resultados en respuestas HTTP.
+
+    La lógica más importante de procesamiento de datos no está
+    directamente aquí; se encuentra principalmente en:
+
+        cvu/domain/cvu_service.py
+
+    ============================================================
+    ENDPOINTS PRINCIPALES
+    ============================================================
+
+    GET:
+
+        /api/v1/cvu/<usuario_id>
+
+    Obtiene la información del CVU de un usuario.
+
+    POST:
+
+        /api/v1/cvu/
+
+    Recibe un archivo JSON completo del CVU.
+
+    POST:
+
+        /api/v1/cvu/create-entry/
+
+    Crea manualmente un nuevo producto.
+
+    PATCH:
+
+        /api/v1/cvu/update-entry/
+
+    Actualiza un producto existente.
+
+    GET:
+
+        /api/v1/cvu/form/<product_type>/
+
+    Obtiene la estructura del formulario dinámico.
     """
 
+    # ========================================================
+    # AUTENTICACIÓN
+    # ========================================================
+
+    # Todas las peticiones realizadas contra este ViewSet
+    # requieren un JWT válido.
+    #
+    # El frontend debe enviar:
+    #
+    # Authorization: Bearer <access_token>
+    #
     authentication_classes = [JWTAuthentication]
+
+
+    # ========================================================
+    # PERMISOS
+    # ========================================================
+
+    # IsAuthenticated significa que solamente los usuarios
+    # autenticados pueden utilizar estos endpoints.
     permission_classes = [IsAuthenticated]
+
+
+    # ========================================================
+    # SERVICIO CVU
+    # ========================================================
+
+    # Creamos una instancia del servicio.
+    #
+    # El ViewSet delegará en esta instancia la mayor parte de
+    # la lógica relacionada con el CVU.
     service = CVUService()
+
+
+    # ========================================================
+    # MÉTODOS HTTP PERMITIDOS
+    # ========================================================
+
+    # Este ViewSet únicamente permite:
+    #
+    # POST
+    # GET
+    # PATCH
+    #
+    # No permite DELETE directamente desde este ViewSet.
     http_method_names = ["post", "get", "patch"]
+
+
+    # ========================================================
+    # OBTENER CVU DE UN USUARIO
+    # ========================================================
 
     def retrieve(self, request, pk, *args, **kwargs):
         """
-        Endpoint para obtener el CVU completo de un usuario específico.
+        Obtiene el CVU completo de un usuario específico.
 
-        Permite recuperar toda la información del CVU de un investigador, incluyendo
-        sus datos personales, productos académicos, y cualquier otra información relevante.
+        El parámetro "pk" corresponde al ID del usuario.
 
-        Args:
-            request (Request): Objeto de solicitud HTTP de Django REST Framework.
-                - query_params['usuario']: ID del usuario cuyo CVU se desea obtener.
-            *args: Argumentos posicionales adicionales.
-            **kwargs: Argumentos de palabra clave adicionales.
+        Ejemplo:
 
-        Returns:
-            Response: Respuesta HTTP con el resultado de la operación.
-                - 200 OK: Si el CVU se obtuvo correctamente.
-                    Formato: {'message': 'CVU obtenido correctamente', 'data': <datos del CVU>}
-                - 400 BAD REQUEST: Si el usuario no existe o hay error en la recuperación del CVU.
-                    Formato: {'message': 'Error al obtener CVU', 'data': <detalle del error>}
+            GET /api/v1/cvu/UUID/
+
+        El método obtiene:
+
+        1. El usuario.
+        2. Los productos de investigador.
+        3. El perfil del usuario.
+        4. Construye la respuesta que será enviada al frontend.
         """
+
+        # ----------------------------------------------------
+        # BUSCAR USUARIO
+        # ----------------------------------------------------
+        #
+        # "pk" viene directamente de la URL.
+        #
+        # Se busca un usuario cuyo ID sea igual al recibido.
         user_instance = User.objects.filter(id=pk).first()
+
+
+        # ----------------------------------------------------
+        # VALIDAR QUE EL USUARIO EXISTA
+        # ----------------------------------------------------
+
         if not user_instance:
+
             return Response(
-                {"message": "Usuario no encontrado."},
+                {
+                    "message": "Usuario no encontrado."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        cvu_data = self.service.get_productos_investigador(user_instance.id)
-        user_data = self.service.get_perfil_usuario(user_instance.id)
+
+        # ----------------------------------------------------
+        # OBTENER PRODUCTOS DEL INVESTIGADOR
+        # ----------------------------------------------------
+        #
+        # Se solicita al servicio todos los productos CVU
+        # asociados con el usuario.
+        cvu_data = self.service.get_productos_investigador(
+            user_instance.id
+        )
+
+
+        # ----------------------------------------------------
+        # OBTENER PERFIL DEL USUARIO
+        # ----------------------------------------------------
+        #
+        # Además de los productos, obtenemos los datos personales
+        # y académicos almacenados en PerfilUsuario.
+        user_data = self.service.get_perfil_usuario(
+            user_instance.id
+        )
+
+
+        # ----------------------------------------------------
+        # VALIDAR RESULTADO DEL PERFIL
+        # ----------------------------------------------------
+
         if user_data.is_err():
+
+            # ------------------------------------------------
+            # PERFIL NO ENCONTRADO
+            # ------------------------------------------------
+            #
+            # Si el error específicamente corresponde a
+            # NOT_FOUND, devolvemos 404.
             if user_data.get_error().code == ErrorCode.NOT_FOUND:
+
                 return Response(
-                    {"message": "Perfil de usuario no encontrado."},
+                    {
+                        "message": "Perfil de usuario no encontrado."
+                    },
                     status=status.HTTP_404_NOT_FOUND,
                 )
+
+
+            # ------------------------------------------------
+            # OTRO ERROR
+            # ------------------------------------------------
+            #
+            # Si ocurrió otro problema al obtener el perfil,
+            # devolvemos el mensaje del error.
             return Response(
-                {"message": user_data.get_error().message},
+                {
+                    "message": user_data.get_error().message
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+        # ----------------------------------------------------
+        # RESPUESTA EXITOSA
+        # ----------------------------------------------------
+        #
+        # asdict convierte el DTO del perfil en un diccionario
+        # que puede ser serializado como JSON.
         return Response(
             {
                 "message": "CVU obtenido correctamente",
-                "user_data": asdict(user_data.unwrap()),
+
+                # Información del perfil.
+                "user_data": asdict(
+                    user_data.unwrap()
+                ),
+
+                # Productos del investigador.
                 "data": cvu_data,
             },
             status=status.HTTP_200_OK,
         )
 
+
+    # ========================================================
+    # CARGAR CVU COMPLETO DESDE ARCHIVO
+    # ========================================================
+
     def create(self, request, *args, **kwargs):
         """
-        Carga y procesa un archivo CVU para un usuario específico.
+        Recibe un archivo JSON que contiene el CVU completo
+        de un investigador.
 
-        Esta función permite cargar un archivo JSON con el CVU completo de un investigador
-        y procesarlo para insertar los datos en el sistema.
+        El frontend envía:
 
-        Args:
-            request (Request): Objeto de solicitud HTTP de Django REST Framework.
-                - FILES['cvuFile']: Archivo JSON del CVU a procesar.
-                - data['usuario']: ID del usuario al que se asociará el CVU.
-            *args: Argumentos posicionales adicionales.
-            **kwargs: Argumentos de palabra clave adicionales.
+            cvuFile
+            usuario
 
-        Returns:
-            Response: Respuesta HTTP con el resultado de la operación.
-                - 201 CREATED: Si el CVU se procesó correctamente.
-                    Formato: {'message': <mensaje de éxito>, 'data': <datos procesados>}
-                - 400 BAD REQUEST: Si el usuario no existe o hay error en el procesamiento.
-                    Formato: {'message': <mensaje de error>, 'data': <detalle del error>}
+        Donde:
+
+            cvuFile:
+                Archivo JSON.
+
+            usuario:
+                UUID del usuario al que se asociará el CVU.
+
+        El método delega el procesamiento real a:
+
+            self.service.read_cvu(...)
         """
+
+        # ----------------------------------------------------
+        # OBTENER ARCHIVO
+        # ----------------------------------------------------
+        #
+        # request.FILES contiene los archivos enviados mediante
+        # multipart/form-data.
+        #
+        # CVUUpload.jsx envía el archivo con el nombre:
+        #
+        # cvuFile
         cvu_file = request.FILES.get("cvuFile")
+
+
+        # ----------------------------------------------------
+        # OBTENER ID DEL USUARIO
+        # ----------------------------------------------------
+        #
+        # request.data contiene los campos enviados en la
+        # petición multipart/form-data.
+        #
+        # El frontend actualmente envía:
+        #
+        # usuario = userId
         usuario_id = request.data.get("usuario")
-        usuario_instance = User.objects.filter(id=usuario_id).first()
+
+
+        # ----------------------------------------------------
+        # BUSCAR USUARIO
+        # ----------------------------------------------------
+        #
+        # El usuario recibido será el propietario de los datos
+        # que se van a cargar.
+        usuario_instance = User.objects.filter(
+            id=usuario_id
+        ).first()
+
+
+        # ----------------------------------------------------
+        # VALIDAR USUARIO
+        # ----------------------------------------------------
+
         if not usuario_instance:
+
             return Response(
-                {"message": "Usuario no encontrado."},
+                {
+                    "message": "Usuario no encontrado."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
+        # ----------------------------------------------------
+        # REGISTRAR OPERACIÓN EN LOG
+        # ----------------------------------------------------
+        #
+        # request.user es el usuario autenticado mediante JWT.
+        #
+        # usuario_id es el usuario que recibimos en el campo
+        # "usuario".
+        #
+        # Esto permite detectar una diferencia importante:
+        #
+        # usuario autenticado
+        #        VS
+        # usuario destino del CVU
         logger.info(
-            f"Usuario {request.user.id} está cargando un CVU para el usuario {usuario_id}."
+            f"Usuario {request.user.id} está cargando un CVU "
+            f"para el usuario {usuario_id}."
         )
-        result = self.service.read_cvu(cvu_file, investigador_id=usuario_instance.id)
+
+
+        # ----------------------------------------------------
+        # PROCESAR CVU
+        # ----------------------------------------------------
+        #
+        # Aquí comienza realmente el procesamiento del archivo.
+        #
+        # CVUService:
+        #
+        # - lee el JSON,
+        # - serializa los datos,
+        # - extrae el perfil,
+        # - guarda/actualiza el perfil,
+        # - elimina productos anteriores,
+        # - inserta los nuevos productos.
+        result = self.service.read_cvu(
+            cvu_file,
+            investigador_id=usuario_instance.id
+        )
+
+
+        # ----------------------------------------------------
+        # VALIDAR RESULTADO
+        # ----------------------------------------------------
+
         if result.is_ok():
+
+            # ------------------------------------------------
+            # CARGA EXITOSA
+            # ------------------------------------------------
             return Response(
-                {"message": "CVU cargado correctamente", "data": result.unwrap()},
+                {
+                    "message": "CVU cargado correctamente",
+                    "data": result.unwrap(),
+                },
                 status=status.HTTP_201_CREATED,
             )
 
+
+        # ----------------------------------------------------
+        # ERROR DURANTE LA CARGA
+        # ----------------------------------------------------
+        #
+        # IMPORTANTE:
+        #
+        # Aquí se utiliza result.unwrap() aunque el Result
+        # indica que hubo un error.
+        #
+        # Dependiendo de la implementación de Result, unwrap()
+        # puede lanzar una excepción cuando el resultado es un
+        # error.
+        #
+        # Esto puede provocar que un error que originalmente
+        # debería regresar HTTP 400 termine convirtiéndose en
+        # HTTP 500.
+        #
+        # Este punto está directamente relacionado con el error
+        # "Request failed with status code 500" que observamos
+        # durante las pruebas de carga del CVU.
+        error = result.get_error()
+
         return Response(
-            {"message": "Error al cargar CVU", "data": result.unwrap()},
+            {
+                "message": error.message if error else "Error al cargar CVU",
+                "code": error.code.value if error else ErrorCode.INVALID_INPUT.value,
+                "details": error.details if error else None,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @action(detail=False, methods=["post"], url_path="create-entry")
+
+    # ========================================================
+    # CREAR UNA NUEVA ENTRADA CVU
+    # ========================================================
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="create-entry"
+    )
     def create_entry(self, request, *args, **kwargs):
         """
-        Crea una nueva entrada en el CVU del usuario autenticado.
+        Crea una nueva entrada individual en el CVU.
 
-        Permite agregar un nuevo registro de producto académico (artículo, capítulo,
-        congreso, etc.) al CVU del usuario que realiza la solicitud.
+        Este endpoint se utiliza cuando el usuario utiliza
+        el formulario dinámico de la aplicación y presiona
+        "Agregar".
 
-        Args:
-            request (Request): Objeto de solicitud HTTP de Django REST Framework.
-                - data['tipo']: Tipo de producto académico a crear (ej: 'articulosCientifica',
-                    'capitulosCientifica', 'congresos', etc.).
-                - data['data']: Diccionario con los datos del producto a crear.
-            *args: Argumentos posicionales adicionales.
-            **kwargs: Argumentos de palabra clave adicionales.
+        El frontend envía:
 
-        Returns:
-            Response: Respuesta HTTP con el resultado de la operación.
-                - 201 CREATED: Si la entrada se creó correctamente.
-                    Formato: {'message': 'Entrada creada correctamente', 'data': <datos creados>}
-                - 400 BAD REQUEST: Si hubo un error al crear la entrada.
-                    Formato: {'message': 'Error al crear entrada', 'data': <detalle del error>}
+            {
+                "tipo": "...",
+                "data": {...}
+            }
+
+        El usuario asociado al registro se obtiene de:
+
+            request.user.id
+
+        Es decir, en esta operación NO se utiliza un campo
+        "usuario" enviado por el frontend.
         """
-        tipo = request.data.get("tipo")
-        data = request.data.get("data")
-        result = self.service.create_new_entry(data, tipo, request.user.id)
-        if result.is_err():
-            return Response(
-                {"message": "Error al crear entrada", "data": result.unwrap()},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
-        return Response(
-            {"message": "Entrada creada correctamente", "data": result.unwrap()},
-            status=status.HTTP_201_CREATED,
+        # ----------------------------------------------------
+        # OBTENER TIPO DE PRODUCTO
+        # ----------------------------------------------------
+        #
+        # Ejemplos:
+        #
+        # articulosCientifica
+        # capitulosCientifica
+        # librosCientifica
+        # congresos
+        #
+        tipo = request.data.get("tipo")
+
+
+        # ----------------------------------------------------
+        # OBTENER DATOS DEL PRODUCTO
+        # ----------------------------------------------------
+        #
+        # Aquí se encuentra la información capturada por
+        # DynamicForm / RecursiveForm.
+        data = request.data.get("data")
+
+
+        # ----------------------------------------------------
+        # CREAR PRODUCTO
+        # ----------------------------------------------------
+        #
+        # request.user.id representa al usuario autenticado.
+        #
+        # Por lo tanto, un registro creado manualmente queda
+        # asociado automáticamente al usuario que inició sesión.
+        result = self.service.create_new_entry(
+            data,
+            tipo,
+            request.user.id
         )
 
-    @action(detail=False, methods=["patch"], url_path="update-entry")
-    def update_entry(self, request, *args, **kwargs):
-        """
-        Actualiza una entrada existente en el CVU del usuario autenticado.
 
-        Permite modificar los datos de un registro de producto académico existente
-        en el CVU del usuario.
+        # ----------------------------------------------------
+        # VALIDAR RESULTADO
+        # ----------------------------------------------------
 
-        Args:
-            request (Request): Objeto de solicitud HTTP de Django REST Framework.
-                - data['tipo']: Tipo de producto académico a actualizar.
-                - data['data']: Diccionario con los nuevos datos del producto.
-                - data['id']: Identificador único de la entrada a actualizar.
-            *args: Argumentos posicionales adicionales.
-            **kwargs: Argumentos de palabra clave adicionales.
-
-        Returns:
-            Response: Respuesta HTTP con el resultado de la operación.
-                - 200 OK: Si la entrada se actualizó correctamente.
-                    Formato: {'message': <mensaje de éxito>, 'data': <datos actualizados>}
-                - 400 BAD REQUEST: Si hubo un error al actualizar la entrada.
-                    Formato: {'message': <detalle del error>, 'data': None}
-        """
-        tipo = request.data.get("tipo")
-        data = request.data.get("data")
-        id_entry = request.data.get("id")
-
-        result = self.service.update_entry(id_entry, data, tipo, request.user.id)
         if result.is_err():
+
             return Response(
                 {
-                    "message": "Error al actualizar el producto de investigador",
+                    "message": "Error al crear entrada",
+
+                    # NOTA:
+                    # Aquí nuevamente se utiliza unwrap()
+                    # sobre un resultado de error.
                     "data": result.unwrap(),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
+        # ----------------------------------------------------
+        # CREACIÓN EXITOSA
+        # ----------------------------------------------------
+
         return Response(
             {
-                "message": "Producto de investigador actualizado correctamente",
-                "data": asdict(result.unwrap()),
+                "message": "Entrada creada correctamente",
+                "data": result.unwrap(),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+    # ========================================================
+    # ACTUALIZAR UNA ENTRADA CVU
+    # ========================================================
+
+    @action(
+        detail=False,
+        methods=["patch"],
+        url_path="update-entry"
+    )
+    def update_entry(self, request, *args, **kwargs):
+        """
+        Actualiza una entrada existente del CVU.
+
+        El frontend debe enviar:
+
+            {
+                "tipo": "...",
+                "data": {...},
+                "id": "..."
+            }
+
+        El usuario se obtiene de:
+
+            request.user.id
+
+        El servicio posteriormente verifica que el producto
+        pertenezca al usuario autenticado.
+        """
+
+        # ----------------------------------------------------
+        # OBTENER TIPO
+        # ----------------------------------------------------
+        tipo = request.data.get("tipo")
+
+
+        # ----------------------------------------------------
+        # OBTENER DATOS
+        # ----------------------------------------------------
+        data = request.data.get("data")
+
+
+        # ----------------------------------------------------
+        # OBTENER ID DEL PRODUCTO
+        # ----------------------------------------------------
+        #
+        # Este es el identificador del producto CVU que se
+        # desea modificar.
+        id_entry = request.data.get("id")
+
+
+        # ----------------------------------------------------
+        # ACTUALIZAR PRODUCTO
+        # ----------------------------------------------------
+        #
+        # Se utiliza request.user.id para garantizar que la
+        # operación se realice sobre el usuario autenticado.
+        result = self.service.update_entry(
+            id_entry,
+            data,
+            tipo,
+            request.user.id
+        )
+
+
+        # ----------------------------------------------------
+        # VALIDAR ERROR
+        # ----------------------------------------------------
+
+        if result.is_err():
+
+            return Response(
+                {
+                    "message":
+                        "Error al actualizar el producto de investigador",
+
+                    # Igual que en create(), aquí se intenta
+                    # obtener el resultado mediante unwrap().
+                    "data": result.unwrap(),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+        # ----------------------------------------------------
+        # ACTUALIZACIÓN EXITOSA
+        # ----------------------------------------------------
+
+        return Response(
+            {
+                "message":
+                    "Producto de investigador actualizado correctamente",
+
+                # Convertimos el DTO en diccionario.
+                "data": asdict(
+                    result.unwrap()
+                ),
             },
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["get"], url_path="form/(?P<product_type>[^/.]+)")
-    def get_form_specifications(self, request, product_type=None, *args, **kwargs):
+
+    # ========================================================
+    # OBTENER ESPECIFICACIÓN DE FORMULARIO
+    # ========================================================
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="form/(?P<product_type>[^/.]+)"
+    )
+    def get_form_specifications(
+        self,
+        request,
+        product_type=None,
+        *args,
+        **kwargs
+    ):
         """
-        Obtiene las especificaciones del formulario para un tipo de producto académico.
+        Obtiene la especificación utilizada para construir
+        dinámicamente un formulario CVU.
 
-        Retorna la estructura y configuración del formulario necesario para crear
-        o editar un tipo específico de producto académico en el CVU.
+        Ejemplo:
 
-        Args:
-            request (Request): Objeto de solicitud HTTP de Django REST Framework.
-            product_type (str, optional): Tipo de producto para el cual se solicitan
-                las especificaciones del formulario. Se obtiene de la URL.
-                Valores válidos según el catálogo 'Tipo Producto Investigador'.
-            *args: Argumentos posicionales adicionales.
-            **kwargs: Argumentos de palabra clave adicionales.
+            GET /api/v1/cvu/form/articulosCientifica/
 
-        Returns:
-            Response: Respuesta HTTP con el resultado de la operación.
-                - 200 OK: Si se encontraron las especificaciones del formulario.
-                    Formato: Diccionario con la estructura del formulario.
-                - 400 BAD REQUEST: Si no se proporcionó el tipo de producto o no es válido.
-                    Formato: {'message': <mensaje de error>}
+        product_type sería:
+
+            articulosCientifica
+
+        La respuesta contiene la estructura que posteriormente
+        consume el frontend para construir DynamicForm /
+        RecursiveForm.
         """
+
+        # ----------------------------------------------------
+        # VALIDAR TIPO DE PRODUCTO
+        # ----------------------------------------------------
+
         if not product_type:
+
             return Response(
-                {"message": "Tipo de producto no proporcionado."},
+                {
+                    "message":
+                        "Tipo de producto no proporcionado."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        type_instance = CatalogoProducto.objects.filter(nombre=product_type).first()
+
+        # ----------------------------------------------------
+        # BUSCAR TIPO EN CATÁLOGO
+        # ----------------------------------------------------
+        #
+        # CatalogoProducto contiene los tipos de productos
+        # disponibles para el CVU.
+        type_instance = CatalogoProducto.objects.filter(
+            nombre=product_type
+        ).first()
+
+
+        # ----------------------------------------------------
+        # VALIDAR TIPO
+        # ----------------------------------------------------
+
         if not type_instance:
+
             return Response(
-                {"message": "Tipo de producto no válido."},
+                {
+                    "message":
+                        "Tipo de producto no válido."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        form_data = self.service.get_form_data(product_type)
-        return Response(form_data, status=status.HTTP_200_OK)
+
+        # ----------------------------------------------------
+        # OBTENER FORMULARIO DESDE EL SERVICIO
+        # ----------------------------------------------------
+        #
+        # CVUService se encarga de construir/obtener la
+        # especificación correspondiente al tipo solicitado.
+        form_data = self.service.get_form_data(
+            product_type
+        )
+
+
+        # ----------------------------------------------------
+        # DEVOLVER ESPECIFICACIÓN
+        # ----------------------------------------------------
+        #
+        # El frontend utiliza esta información para construir
+        # el formulario dinámicamente.
+        return Response(
+            form_data,
+            status=status.HTTP_200_OK
+        )
