@@ -415,25 +415,28 @@ class CVUView(ViewSet):
             f"para el usuario {usuario_id}."
         )
 
-
         # ----------------------------------------------------
-        # PROCESAR CVU
-        # ----------------------------------------------------
-        #
-        # Aquí comienza realmente el procesamiento del archivo.
-        #
-        # CVUService:
-        #
-        # - lee el JSON,
-        # - serializa los datos,
-        # - extrae el perfil,
-        # - guarda/actualiza el perfil,
-        # - elimina productos anteriores,
-        # - inserta los nuevos productos.
+        # # PROCESAR CVU
+        # # ----------------------------------------------------
+        # #
+        # # Se envían dos identificadores:
+        # #
+        # # investigador_id:
+        # #     Usuario al que se asociará el CVU.
+        # #
+        # # autenticado_id:
+        # #     Usuario obtenido directamente de request.user,
+        # #     es decir, del JWT autenticado por Django REST Framework.
+        # #
+        # # CVUService utilizará autenticado_id para comprobar
+        # # que el usuario_id contenido dentro del JSON corresponde
+        # # realmente al usuario que inició sesión.         
+        
         result = self.service.read_cvu(
             cvu_file,
-            investigador_id=usuario_instance.id
-        )
+            investigador_id=usuario_instance.id,
+            autenticado_id=request.user.id
+            )
 
 
         # ----------------------------------------------------

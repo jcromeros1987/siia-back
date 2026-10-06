@@ -391,9 +391,10 @@ class CVUService:
     # ========================================================
 
     def read_cvu(
-        self,
-        cvu_file: Any,
-        investigador_id: UUID
+            self,
+            cvu_file: Any,
+            investigador_id: UUID,
+            autenticado_id: UUID
     ) -> Result[str]:
         """
         Lee y procesa un archivo CVU completo.
@@ -432,6 +433,11 @@ class CVUService:
 
             investigador_id:
                 Usuario al que se asociará el CVU.
+
+            autenticado_id:
+                ID del usuario autenticado obtenido mediante JWT.
+                Se utiliza para validar que el usuario_id del
+                archivo CVU corresponda a la sesión activa.
         """
 
         # ----------------------------------------------------
@@ -484,7 +490,7 @@ class CVUService:
             # bool
             #
             # etc.
-            cvu_data = json.load(cvu_file)
+            cvu_data = json.load(cvu_file)            
 
         except json.JSONDecodeError as e:
 
@@ -495,29 +501,92 @@ class CVUService:
                 str(e)
             )
 
-
         # ----------------------------------------------------
-        # VALIDAR USUARIO DEL CVU
+        # VALIDAR USUARIO DEL JSON CONTRA LA SESIÓN
         # ----------------------------------------------------
         #
-        # El archivo CVU debe contener en el nivel raíz:
+        # El usuario autenticado se obtiene en CVUView mediante:
+        #
+        #     request.user.id
+        #
+        # El ViewSet entrega ese valor al servicio mediante:
+        #
+        #     autenticado_id
+        #
+        # El archivo CVU contiene:
         #
         #     usuario_id
         #
-        # Este valor se compara en el repositorio contra:
+        # Ambos valores deben corresponder al mismo usuario.
         #
-        #     app_cvu.cvu_perfil_usuarios.usuario_id
-        #
-        # utilizando además el investigador_id del usuario que
-        # está realizando la carga.
-        #
-        # La validación ocurre ANTES de serializar, guardar el
-        # perfil, eliminar productos anteriores o insertar los
-        # nuevos productos.
+        # Esta validación ocurre antes de cualquier operación
+        # que pueda modificar información en la base de datos.
 
-        cvu_usuario_id = cvu_data.get(
-            "usuario_id"
-        ) if isinstance(cvu_data, dict) else None
+        cvu_usuario_id = (
+            cvu_data.get("usuario_id")
+            if isinstance(cvu_data, dict)
+            else None
+        )
+
+        # ----------------------------------------------------
+        # VALIDAR QUE EL JSON CONTENGA usuario_id
+        # ----------------------------------------------------
+
+        if not cvu_usuario_id:
+
+            return Result.err_from(
+                ErrorCode.VALIDATION_ERROR,
+                "El archivo CVU no contiene el usuario_id requerido."
+            )
+
+        # ----------------------------------------------------
+        # VALIDAR USUARIO AUTENTICADO
+        # ----------------------------------------------------
+
+        if not autenticado_id:
+
+            return Result.err_from(
+                ErrorCode.VALIDATION_ERROR,
+                "No se pudo identificar al usuario autenticado."
+            )
+
+        # ----------------------------------------------------
+        # COMPARAR JSON CONTRA SESIÓN
+        # ----------------------------------------------------
+        #
+        # Se normalizan ambos valores únicamente para evitar
+        # diferencias por espacios externos o mayúsculas/minúsculas.
+
+        usuario_json_normalizado = (
+            str(cvu_usuario_id).strip().casefold()
+        )
+
+        usuario_sesion_normalizado = (
+            str(autenticado_id).strip().casefold()
+        )
+
+        if usuario_json_normalizado != usuario_sesion_normalizado:
+
+            logger.warning(
+                "Carga de CVU rechazada: el usuario_id del archivo "
+                "no corresponde al usuario autenticado. "
+                "usuario_autenticado=%s, usuario_json=%s",
+                autenticado_id,
+                cvu_usuario_id,
+            )
+
+            return Result.err_from(
+                ErrorCode.VALIDATION_ERROR,
+                "No se puede cargar el CVU porque el usuario_id "
+                "del archivo no corresponde al usuario autenticado."
+            )
+
+        # ----------------------------------------------------
+        # VALIDAR usuario_id CONTRA EL PERFIL PRECARGADO
+        # ----------------------------------------------------
+        #
+        # Se reutiliza cvu_usuario_id para la validación existente
+        # contra app_cvu.cvu_perfil_usuarios.
 
 
         validacion_usuario = (
