@@ -36,6 +36,10 @@
     "label": "Transferencia Tecnológica"
   },
   {
+    "nombre": "proyectosInvestigacion",
+    "label": "Proyectos de Investigación"
+  },
+  {
     "nombre": "trayectoriaAcademica",
     "label": "Trayectoria Académica"
   },

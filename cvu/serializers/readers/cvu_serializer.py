@@ -37,6 +37,7 @@ class AportacionesSerializer(serializers.Serializer):
     desarrolloTecnologicoInnovacion = ProductoSerializer(many=True, required=False)
     propiedadIntelectual = ProductoSerializer(many=True, required=False)
     transferenciaTecnologica = ProductoSerializer(many=True, required=False)
+    proyectosInvestigacion = ProductoSerializer(many=True, required=False)
 
 
 class FotografiaSerializer(serializers.Serializer):
@@ -75,7 +76,7 @@ class PrincipalSerializer(serializers.Serializer):
     semblanza = serializers.CharField(required=False, allow_null=True)
     linkedin = serializers.CharField(required=False, allow_null=True)
     intereses = serializers.ListField(child=serializers.CharField(), required=False)
-    habilidades = serializers.ListField(child=serializers.CharField(), required=False)
+    habilidades = serializers.ListField(required=False)
     orcId = serializers.CharField(required=False, allow_null=True)
     curp = serializers.CharField(required=False, allow_null=True)
     nombre = serializers.CharField(required=False, allow_null=True)

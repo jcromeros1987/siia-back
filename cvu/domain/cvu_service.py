@@ -85,7 +85,7 @@ from cvu.logger import logger
 # Se utiliza directamente en get_form_data() para obtener
 # un producto existente y utilizar su estructura como base
 # para generar el formulario dinámico.
-from cvu.models import ProductoInvestigador
+from cvu.models import PerfilUsuario, ProductoInvestigador
 
 
 # Repositorio del CVU.
@@ -436,8 +436,8 @@ class CVUService:
 
             autenticado_id:
                 ID del usuario autenticado obtenido mediante JWT.
-                Se utiliza para validar que el usuario_id del
-                archivo CVU corresponda a la sesión activa.
+                Identifica quién realiza la carga. El JSON del
+                CVU no tiene que incluir usuario_id.
         """
 
         # ----------------------------------------------------
@@ -469,8 +469,9 @@ class CVUService:
         # ----------------------------------------------------
 
         logger.info(
-            "Usuario está cargando un CVU para el investigador "
-            f"{investigador_id}."
+            "Usuario %s está cargando un CVU para el investigador %s.",
+            autenticado_id,
+            investigador_id,
         )
 
 
@@ -502,165 +503,73 @@ class CVUService:
             )
 
         # ----------------------------------------------------
-        # VALIDAR USUARIO DEL JSON CONTRA LA SESIÓN
+        # VALIDAR NÚMERO DE CVU
         # ----------------------------------------------------
         #
-        # El usuario autenticado se obtiene en CVUView mediante:
+        # El archivo trae el número en perfil.cvu.
+        # Ese valor debe coincidir con el CVU ya registrado
+        # para el usuario que recibe la carga:
         #
-        #     request.user.id
+        #     app_cvu.cvu_perfil_usuarios.cvu
         #
-        # El ViewSet entrega ese valor al servicio mediante:
-        #
-        #     autenticado_id
-        #
-        # El archivo CVU contiene:
-        #
-        #     usuario_id
-        #
-        # Ambos valores deben corresponder al mismo usuario.
-        #
-        # Esta validación ocurre antes de cualquier operación
-        # que pueda modificar información en la base de datos.
+        # La comparación ocurre antes de serializar o de
+        # modificar perfil y productos.
 
-        cvu_usuario_id = (
-            cvu_data.get("usuario_id")
+        perfil_json = (
+            cvu_data.get("perfil", {})
             if isinstance(cvu_data, dict)
+            else {}
+        )
+
+        cvu_json = (
+            perfil_json.get("cvu")
+            if isinstance(perfil_json, dict)
             else None
         )
 
-        # ----------------------------------------------------
-        # VALIDAR QUE EL JSON CONTENGA usuario_id
-        # ----------------------------------------------------
+        cvu_json_normalizado = (
+            str(cvu_json).strip()
+            if cvu_json is not None
+            else ""
+        )
 
-        if not cvu_usuario_id:
+        if not cvu_json_normalizado:
 
             return Result.err_from(
                 ErrorCode.VALIDATION_ERROR,
-                "El archivo CVU no contiene el usuario_id requerido."
+                "No se puede cargar el CVU porque el archivo "
+                "no contiene el número de CVU."
             )
 
-        # ----------------------------------------------------
-        # VALIDAR USUARIO AUTENTICADO
-        # ----------------------------------------------------
-
-        if not autenticado_id:
-
-            return Result.err_from(
-                ErrorCode.VALIDATION_ERROR,
-                "No se pudo identificar al usuario autenticado."
-            )
-
-        # ----------------------------------------------------
-        # COMPARAR JSON CONTRA SESIÓN
-        # ----------------------------------------------------
-        #
-        # Se normalizan ambos valores únicamente para evitar
-        # diferencias por espacios externos o mayúsculas/minúsculas.
-
-        usuario_json_normalizado = (
-            str(cvu_usuario_id).strip().casefold()
+        perfil_registrado = (
+            PerfilUsuario.objects
+            .filter(usuario=investigador_id)
+            .first()
         )
 
-        usuario_sesion_normalizado = (
-            str(autenticado_id).strip().casefold()
+        cvu_registrado = (
+            str(perfil_registrado.cvu).strip()
+            if perfil_registrado is not None
+            and perfil_registrado.cvu is not None
+            else ""
         )
 
-        if usuario_json_normalizado != usuario_sesion_normalizado:
+        if cvu_json_normalizado != cvu_registrado:
 
             logger.warning(
-                "Carga de CVU rechazada: el usuario_id del archivo "
-                "no corresponde al usuario autenticado. "
-                "usuario_autenticado=%s, usuario_json=%s",
-                autenticado_id,
-                cvu_usuario_id,
+                "Carga de CVU rechazada: el número de CVU del archivo "
+                "no corresponde al perfil registrado. "
+                "investigador_id=%s, cvu_json=%s, cvu_bd=%s",
+                investigador_id,
+                cvu_json,
+                perfil_registrado.cvu if perfil_registrado else None,
             )
 
             return Result.err_from(
                 ErrorCode.VALIDATION_ERROR,
-                "No se puede cargar el CVU porque el usuario_id "
-                "del archivo no corresponde al usuario autenticado."
+                "No se puede cargar el CVU porque el número de CVU "
+                "del archivo no corresponde al registrado para este usuario."
             )
-
-        # ----------------------------------------------------
-        # VALIDAR usuario_id CONTRA EL PERFIL PRECARGADO
-        # ----------------------------------------------------
-        #
-        # Se reutiliza cvu_usuario_id para la validación existente
-        # contra app_cvu.cvu_perfil_usuarios.
-
-
-        validacion_usuario = (
-            self.cvu_repository
-            .validate_cvu_usuario_id(
-                investigador_id=investigador_id,
-                cvu_usuario_id=cvu_usuario_id
-            )
-        )
-
-
-        if validacion_usuario.is_err():
-
-            logger.warning(
-                "Carga de CVU rechazada: el usuario_id del archivo "
-                f"no corresponde al investigador {investigador_id}."
-            )
-
-            return validacion_usuario
-
-
-        # ----------------------------------------------------
-        # VALIDAR DATOS PERSONALES DEL CVU
-        # ----------------------------------------------------
-        #
-        # El nombre y los apellidos se encuentran dentro de:
-        #
-        #     perfil -> principal
-        #
-        # Se valida antes de serializar o modificar información
-        # en la base de datos.
-
-        perfil_data = cvu_data.get(
-            "perfil",
-            {}
-        ) if isinstance(cvu_data, dict) else {}
-
-        principal_data = perfil_data.get(
-            "principal",
-            {}
-        ) if isinstance(perfil_data, dict) else {}
-
-        validacion_datos_personales = (
-            self.cvu_repository
-            .validate_cvu_datos_personales(
-                investigador_id=investigador_id,
-                cvu_usuario_id=cvu_usuario_id,
-                nombre=(
-                    principal_data.get("nombre")
-                    if isinstance(principal_data, dict)
-                    else None
-                ),
-                primer_apellido=(
-                    principal_data.get("primerApellido")
-                    if isinstance(principal_data, dict)
-                    else None
-                ),
-                segundo_apellido=(
-                    principal_data.get("segundoApellido")
-                    if isinstance(principal_data, dict)
-                    else None
-                )
-            )
-        )
-
-        if validacion_datos_personales.is_err():
-
-            logger.warning(
-                "Carga de CVU rechazada: los datos personales "
-                f"del archivo no corresponden al investigador {investigador_id}."
-            )
-
-            return validacion_datos_personales
-
 
         # ----------------------------------------------------
         # SERIALIZAR CVU

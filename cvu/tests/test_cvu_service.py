@@ -183,7 +183,11 @@ class TestCVUService:
             service = CVUService()
             investigador_id = uuid.uuid4()
 
-            result = service.read_cvu(cvu_file=None, investigador_id=investigador_id)
+            result = service.read_cvu(
+                cvu_file=None,
+                investigador_id=investigador_id,
+                autenticado_id=uuid.uuid4(),
+            )
 
             assert isinstance(result, Result)
             assert result.is_err()
@@ -198,7 +202,11 @@ class TestCVUService:
             service = CVUService()
             cvu_file = StringIO(json.dumps({"test": "data"}))
 
-            result = service.read_cvu(cvu_file=cvu_file, investigador_id=None)
+            result = service.read_cvu(
+                cvu_file=cvu_file,
+                investigador_id=None,
+                autenticado_id=uuid.uuid4(),
+            )
 
             assert isinstance(result, Result)
             assert result.is_err()
@@ -215,7 +223,9 @@ class TestCVUService:
             invalid_cvu_file = StringIO("{invalid json}")
 
             result = service.read_cvu(
-                cvu_file=invalid_cvu_file, investigador_id=investigador_id
+                cvu_file=invalid_cvu_file,
+                investigador_id=investigador_id,
+                autenticado_id=uuid.uuid4(),
             )
 
             assert isinstance(result, Result)
@@ -228,28 +238,40 @@ class TestCVUService:
             with patch(
                 "cvu.domain.cvu_service.PerfilCompletoSerializer"
             ) as mock_serializer_class:
-                mock_repo = Mock()
-                mock_repo_class.return_value = mock_repo
-                investigador_id = uuid.uuid4()
+                with patch(
+                    "cvu.domain.cvu_service.PerfilUsuario"
+                ) as mock_perfil:
+                    mock_repo = Mock()
+                    mock_repo_class.return_value = mock_repo
+                    investigador_id = uuid.uuid4()
+                    mock_perfil.objects.filter.return_value.first.return_value.cvu = (
+                        "2082010"
+                    )
 
-                # Mock the serializer
-                mock_serializer = Mock()
-                mock_serializer.data = {"processed": "data"}
-                mock_serializer_class.return_value = mock_serializer
+                    # Mock the serializer
+                    mock_serializer = Mock()
+                    mock_serializer.data = {"processed": "data"}
+                    mock_serializer_class.return_value = mock_serializer
 
-                # Mock the repository methods
-                mock_repo.delete_productos_investigador.return_value = Result.ok(None)
-                mock_repo.insert_productos_investigador.return_value = Result.ok(
-                    "Success"
-                )
+                    # Mock the repository methods
+                    mock_repo.delete_productos_investigador.return_value = Result.ok(None)
+                    mock_repo.insert_productos_investigador.return_value = Result.ok(
+                        "Success"
+                    )
 
-                service = CVUService()
-                cvu_data = {"eje": "test", "titulo": "test title"}
-                cvu_file = StringIO(json.dumps(cvu_data))
+                    service = CVUService()
+                    cvu_data = {
+                        "perfil": {"cvu": "2082010"},
+                        "eje": "test",
+                        "titulo": "test title",
+                    }
+                    cvu_file = StringIO(json.dumps(cvu_data))
 
-                result = service.read_cvu(
-                    cvu_file=cvu_file, investigador_id=investigador_id
-                )
+                    result = service.read_cvu(
+                        cvu_file=cvu_file,
+                        investigador_id=investigador_id,
+                        autenticado_id=uuid.uuid4(),
+                    )
 
-                assert isinstance(result, Result)
-                assert result.is_ok()
+                    assert isinstance(result, Result)
+                    assert result.is_ok()
