@@ -271,6 +271,9 @@ class TestCVUService:
                         "CVU original guardado."
                     )
                     mock_repo.get_catalogo_productos.return_value = Result.ok([])
+                    mock_repo.create_or_update_perfil_usuario.return_value = Result.ok(
+                        Mock()
+                    )
 
                     service = CVUService()
                     cvu_data = {
@@ -292,6 +295,132 @@ class TestCVUService:
                         investigador_id,
                         cvu_data,
                     )
+
+    def test_read_cvu_allows_first_load_when_user_has_no_profile(self):
+        """La primera carga crea el perfil aunque el usuario aún no tenga CVU."""
+        with patch("cvu.domain.cvu_service.CVURepository") as mock_repo_class:
+            with patch(
+                "cvu.domain.cvu_service.PerfilCompletoSerializer"
+            ) as mock_serializer_class:
+                with patch(
+                    "cvu.domain.cvu_service.PerfilUsuario"
+                ) as mock_perfil:
+                    mock_repo = Mock()
+                    mock_repo_class.return_value = mock_repo
+                    investigador_id = uuid.uuid4()
+                    mock_perfil.objects.filter.return_value.first.return_value = None
+
+                    mock_serializer = Mock()
+                    mock_serializer.data = {"processed": "data"}
+                    mock_serializer_class.return_value = mock_serializer
+
+                    mock_repo.delete_productos_investigador.return_value = Result.ok(None)
+                    mock_repo.insert_productos_investigador.return_value = Result.ok(
+                        "Success"
+                    )
+                    mock_repo.save_cvu_origen.return_value = Result.ok(
+                        "CVU original guardado."
+                    )
+                    mock_repo.get_catalogo_productos.return_value = Result.ok([])
+                    mock_repo.create_or_update_perfil_usuario.return_value = Result.ok(
+                        Mock()
+                    )
+
+                    service = CVUService()
+                    cvu_data = {"perfil": {"cvu": "2082010"}}
+                    cvu_file = StringIO(json.dumps(cvu_data))
+
+                    result = service.read_cvu(
+                        cvu_file=cvu_file,
+                        investigador_id=investigador_id,
+                        autenticado_id=uuid.uuid4(),
+                    )
+
+                    assert result.is_ok()
+                    mock_repo.create_or_update_perfil_usuario.assert_called_once()
+
+    def test_read_cvu_rejects_when_registered_cvu_differs(self):
+        """Un CVU ya registrado distinto al del archivo se rechaza."""
+        with patch("cvu.domain.cvu_service.CVURepository") as mock_repo_class:
+            with patch("cvu.domain.cvu_service.PerfilUsuario") as mock_perfil:
+                mock_repo = Mock()
+                mock_repo_class.return_value = mock_repo
+                investigador_id = uuid.uuid4()
+                mock_perfil.objects.filter.return_value.first.return_value.cvu = (
+                    "1111111"
+                )
+
+                service = CVUService()
+                cvu_file = StringIO(
+                    json.dumps({"perfil": {"cvu": "2082010"}})
+                )
+
+                result = service.read_cvu(
+                    cvu_file=cvu_file,
+                    investigador_id=investigador_id,
+                    autenticado_id=uuid.uuid4(),
+                )
+
+                assert result.is_err()
+                assert result.get_error().code == ErrorCode.VALIDATION_ERROR
+                assert "no corresponde" in result.get_error().message
+                mock_repo.delete_productos_investigador.assert_not_called()
+
+    def test_read_cvu_stops_when_profile_cannot_be_saved(self):
+        """Si el perfil no se guarda, no se intenta el JSON original."""
+        with patch("cvu.domain.cvu_service.CVURepository") as mock_repo_class:
+            with patch(
+                "cvu.domain.cvu_service.PerfilCompletoSerializer"
+            ) as mock_serializer_class:
+                with patch("cvu.domain.cvu_service.PerfilUsuario") as mock_perfil:
+                    mock_repo = Mock()
+                    mock_repo_class.return_value = mock_repo
+                    mock_perfil.objects.filter.return_value.first.return_value = None
+                    mock_serializer_class.return_value.data = {}
+                    mock_repo.get_catalogo_productos.return_value = Result.ok([])
+                    mock_repo.create_or_update_perfil_usuario.return_value = (
+                        Result.err_from(
+                            ErrorCode.VALIDATION_ERROR,
+                            "Error de validación",
+                        )
+                    )
+
+                    service = CVUService()
+                    result = service.read_cvu(
+                        cvu_file=StringIO(
+                            json.dumps({"perfil": {"cvu": "2082010"}})
+                        ),
+                        investigador_id=uuid.uuid4(),
+                        autenticado_id=uuid.uuid4(),
+                    )
+
+                    assert result.is_err()
+                    assert result.get_error().message == "Error de validación"
+                    mock_repo.delete_productos_investigador.assert_not_called()
+                    mock_repo.save_cvu_origen.assert_not_called()
+
+    def test_normalize_perfil_data_clears_values_rizoma_leaves_blank(self):
+        service = CVUService()
+
+        normalized = service.normalize_perfil_data(
+            {
+                "correo_alternativo": "  ",
+                "linkedin": "jose-armando",
+                "fecha_nacimiento": "1990-01-01T00:00:00",
+                "fotografia": "https://ejemplo.test/foto.jpg",
+                "sexo": "",
+                "intereses": None,
+                "curp": "MADA990101HMCRZR03EXTRA",
+            }
+        )
+
+        assert normalized["correo_alternativo"] is None
+        assert normalized["linkedin"] is None
+        assert normalized["fecha_nacimiento"] == "1990-01-01"
+        assert normalized["fotografia"]["uri"] == "https://ejemplo.test/foto.jpg"
+        assert normalized["sexo"] is None
+        assert normalized["intereses"] == []
+        assert normalized["curp"] == "MADA990101HMCRZR03"
 
 
 class TestRizomaExport:

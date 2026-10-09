@@ -710,10 +710,12 @@ class CVUService:
         # ----------------------------------------------------
         #
         # El archivo trae el número en perfil.cvu.
-        # Ese valor debe coincidir con el CVU ya registrado
-        # para el usuario que recibe la carga:
         #
-        #     app_cvu.cvu_perfil_usuarios.cvu
+        # Si el usuario ya tiene un CVU en
+        # app_cvu.cvu_perfil_usuarios, el del archivo debe
+        # coincidir. Si todavía no hay perfil, o el CVU
+        # guardado está vacío, esta es la primera carga:
+        # se acepta el archivo y más adelante se crea el perfil.
         #
         # La comparación ocurre antes de serializar o de
         # modificar perfil y productos.
@@ -757,7 +759,7 @@ class CVUService:
             else ""
         )
 
-        if cvu_json_normalizado != cvu_registrado:
+        if cvu_registrado and cvu_json_normalizado != cvu_registrado:
 
             logger.warning(
                 "Carga de CVU rechazada: el número de CVU del archivo "
@@ -810,8 +812,10 @@ class CVUService:
         # Convierte los nombres utilizados por el JSON CVU
         # al formato utilizado por PerfilUsuario.
 
-        perfil_data = self.extract_perfil_from_cvu(
-            serialized_data
+        perfil_data = self.normalize_perfil_data(
+            self.extract_perfil_from_cvu(
+                serialized_data
+            )
         )
 
 
@@ -820,12 +824,28 @@ class CVUService:
         # ----------------------------------------------------
         #
         # Crea o actualiza la información personal/académica
-        # del investigador.
+        # del investigador. Si no queda guardado, no se
+        # continúan productos ni el JSON original: ese JSON
+        # se escribe sobre el perfil recién creado.
 
-        self.save_perfil_usuario(
+        perfil_result = self.save_perfil_usuario(
             investigador_id,
             perfil_data
         )
+
+        if perfil_result.is_err():
+
+            error = perfil_result.get_error()
+
+            logger.warning(
+                "No se pudo guardar el perfil durante la carga de CVU. "
+                "investigador_id=%s mensaje=%s detalles=%s",
+                investigador_id,
+                error.message,
+                error.details,
+            )
+
+            return Result.err(error)
 
 
         # ----------------------------------------------------
@@ -1986,6 +2006,109 @@ class CVUService:
     # ========================================================
     # EXTRAER PERFIL DESDE EL CVU
     # ========================================================
+
+    def normalize_perfil_data(self, data: dict) -> dict:
+        """
+        Ajusta el perfil extraído del JSON para que pueda crearse
+        aunque Rizoma mande textos vacíos o tipos distintos a los
+        del modelo.
+        """
+
+        normalized = dict(data)
+        text_limits = {
+            "cvu": 128,
+            "nivel_academico": 255,
+            "titulo": 512,
+            "nombre": 255,
+            "primer_apellido": 255,
+            "segundo_apellido": 255,
+            "linkedin": 512,
+            "orcid": 64,
+            "curp": 18,
+            "rfc": 13,
+        }
+
+        for key in (
+            "cvu",
+            "nivel_academico",
+            "titulo",
+            "nombre",
+            "primer_apellido",
+            "segundo_apellido",
+            "semblanza",
+            "linkedin",
+            "orcid",
+            "correo_alternativo",
+            "curp",
+            "rfc",
+            "fecha_nacimiento",
+        ):
+            value = normalized.get(key)
+
+            if isinstance(value, str):
+                value = value.strip() or None
+
+            if isinstance(value, str) and key in text_limits:
+                value = value[: text_limits[key]]
+
+            normalized[key] = value
+
+        fecha = normalized.get("fecha_nacimiento")
+
+        if isinstance(fecha, str):
+            fecha = fecha[:10]
+            normalized["fecha_nacimiento"] = (
+                fecha
+                if len(fecha) == 10 and fecha[4] == "-" and fecha[7] == "-"
+                else None
+            )
+
+        linkedin = normalized.get("linkedin")
+
+        if isinstance(linkedin, str) and not linkedin.startswith(
+            ("http://", "https://")
+        ):
+            normalized["linkedin"] = None
+
+        correo = normalized.get("correo_alternativo")
+
+        if isinstance(correo, str) and "@" not in correo:
+            normalized["correo_alternativo"] = None
+
+        fotografia = normalized.get("fotografia")
+
+        if isinstance(fotografia, str):
+            fotografia = fotografia.strip()
+            normalized["fotografia"] = (
+                {
+                    "nombre": None,
+                    "contentType": None,
+                    "uri": fotografia,
+                }
+                if fotografia
+                else None
+            )
+        elif fotografia is not None and not isinstance(fotografia, dict):
+            normalized["fotografia"] = None
+
+        for key in (
+            "sexo",
+            "pais_nacimiento",
+            "entidad_federativa",
+            "estado_civil",
+            "nacionalidad",
+            "area_conocimiento",
+        ):
+            value = normalized.get(key)
+
+            if value is not None and not isinstance(value, dict):
+                normalized[key] = None
+
+        for key in ("intereses", "habilidades"):
+            if not isinstance(normalized.get(key), list):
+                normalized[key] = []
+
+        return normalized
 
     def extract_perfil_from_cvu(
         self,
