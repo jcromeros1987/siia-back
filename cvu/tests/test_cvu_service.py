@@ -3,8 +3,17 @@ import uuid
 from io import StringIO
 from unittest.mock import Mock, patch
 
-from cvu.DTOs import CatalogoProductoDTO, ProductoInvestigadorCheckerDTO
-from cvu.domain.cvu_service import CVUService
+from cvu.DTOs import (
+    CatalogoProductoDTO,
+    PerfilUsuarioDTO,
+    ProductoInvestigadorCheckerDTO,
+)
+from cvu.domain.cvu_service import (
+    CVUService,
+    build_rizoma_cvu,
+    producto_para_rizoma,
+)
+from cvu.serializers.readers.cvu_serializer import ProductoSerializer
 from cvu.utils import Result, ErrorCode
 
 
@@ -258,6 +267,10 @@ class TestCVUService:
                     mock_repo.insert_productos_investigador.return_value = Result.ok(
                         "Success"
                     )
+                    mock_repo.save_cvu_origen.return_value = Result.ok(
+                        "CVU original guardado."
+                    )
+                    mock_repo.get_catalogo_productos.return_value = Result.ok([])
 
                     service = CVUService()
                     cvu_data = {
@@ -275,3 +288,264 @@ class TestCVUService:
 
                     assert isinstance(result, Result)
                     assert result.is_ok()
+                    mock_repo.save_cvu_origen.assert_called_once_with(
+                        investigador_id,
+                        cvu_data,
+                    )
+
+
+class TestRizomaExport:
+    def test_producto_para_rizoma_keeps_original_id(self):
+        item = producto_para_rizoma(
+            {"id": "rizoma-1", "titulo": "Artículo"},
+            "otro-id",
+        )
+
+        assert item["id"] == "rizoma-1"
+        assert item["titulo"] == "Artículo"
+
+    def test_producto_para_rizoma_uses_id_producto_when_missing(self):
+        item = producto_para_rizoma(
+            {"titulo": "Nuevo"},
+            "manual-1",
+        )
+
+        assert item["id"] == "manual-1"
+
+    def test_producto_para_rizoma_uses_fallback_when_id_producto_missing(self):
+        item = producto_para_rizoma(
+            {"titulo": "Manual"},
+            None,
+            "registro-1",
+        )
+
+        assert item["id"] == "registro-1"
+        assert item["titulo"] == "Manual"
+
+    def test_build_rizoma_cvu_preserves_envelope_and_replaces_data(self):
+        origen = {
+            "filtro": "todos",
+            "nombreInstituciónReceptora": "UNAM",
+            "identificadorInstitucion": {"nombre": "UNAM", "valor": "1"},
+            "perfil": {
+                "id": "perfil-rizoma",
+                "login": "ana.lopez",
+                "cvu": "viejo",
+                "createdDate": "2020-01-01T00:00:00",
+                "principal": {
+                    "nombre": "Anterior",
+                    "datoExtra": "conservar",
+                },
+                "formacionContinua": {
+                    "cursos": [{"id": "curso-viejo"}],
+                    "nota": "conservar",
+                },
+            },
+            "aportaciones": {
+                "articulosCientifica": [{"id": "art-viejo", "titulo": "Viejo"}],
+            },
+        }
+
+        document = build_rizoma_cvu(
+            {
+                "cvu": "2082010",
+                "nivel_academico": "Doctorado",
+                "titulo": "Dra.",
+                "correo_alternativo": "ana@correo.com",
+                "nombre": "Ana",
+                "primer_apellido": "López",
+                "segundo_apellido": "Ruiz",
+                "fotografia": None,
+                "semblanza": "Semblanza actual",
+                "linkedin": None,
+                "orcid": "0000-0001",
+                "intereses": ["agua"],
+                "habilidades": [],
+                "curp": None,
+                "rfc": None,
+                "fecha_nacimiento": "1980-01-02",
+                "sexo": {"id": "2", "nombre": "Mujer"},
+                "pais_nacimiento": None,
+                "entidad_federativa": None,
+                "estado_civil": None,
+                "nacionalidad": None,
+                "area_conocimiento": {"area": {"nombre": "Biología"}},
+            },
+            {
+                "articulosCientifica": [
+                    {"id": "art-nuevo", "titulo": "Nuevo artículo"}
+                ],
+                "cursos": [
+                    {"id": "curso-nuevo", "nombre": "Curso actual"}
+                ],
+            },
+            origen,
+        )
+
+        assert document["filtro"] == "todos"
+        assert document["nombreInstituciónReceptora"] == "UNAM"
+        assert document["identificadorInstitucion"]["valor"] == "1"
+        assert document["perfil"]["id"] == "perfil-rizoma"
+        assert document["perfil"]["login"] == "ana.lopez"
+        assert document["perfil"]["createdDate"] == "2020-01-01T00:00:00"
+        assert document["perfil"]["cvu"] == "2082010"
+        assert document["perfil"]["nivelAcademico"] == "Doctorado"
+        assert document["perfil"]["principal"]["nombre"] == "Ana"
+        assert document["perfil"]["principal"]["datoExtra"] == "conservar"
+        assert document["perfil"]["principal"]["orcId"] == "0000-0001"
+        assert document["perfil"]["principal"]["primerApellido"] == "López"
+        assert document["aportaciones"]["articulosCientifica"] == [
+            {"id": "art-nuevo", "titulo": "Nuevo artículo"}
+        ]
+        assert document["aportaciones"]["librosCientifica"] == []
+        assert document["perfil"]["formacionContinua"]["cursos"] == [
+            {"id": "curso-nuevo", "nombre": "Curso actual"}
+        ]
+        assert document["perfil"]["formacionContinua"]["nota"] == "conservar"
+        assert document["perfil"]["trayectoriaAcademica"] == []
+        assert document["perfil"]["idiomaLengua"]["idiomas"] == []
+
+    def test_export_cvu_uses_current_products_and_stored_origin(self):
+        investigador_id = uuid.uuid4()
+        perfil = PerfilUsuarioDTO(
+            id=uuid.uuid4(),
+            usuario_id=investigador_id,
+            cvu="2082010",
+            nivel_academico="Doctorado",
+            titulo="Dra.",
+            nombre="Ana",
+            primer_apellido="López",
+            segundo_apellido=None,
+            fotografia=None,
+            semblanza=None,
+            linkedin=None,
+            orcid="0000-0001",
+            correo_alternativo=None,
+            curp=None,
+            rfc=None,
+            fecha_nacimiento=None,
+        )
+
+        producto = Mock()
+        producto.contenido = {"titulo": "Artículo editado"}
+        producto.id_producto = "art-1"
+        producto.tipo.nombre = "articulosCientifica"
+
+        perfil_model = Mock()
+        perfil_model.cvu_origen = {
+            "filtro": "activos",
+            "perfil": {"login": "ana.lopez", "id": "abc"},
+        }
+
+        with patch("cvu.domain.cvu_service.CVURepository"):
+            with patch(
+                "cvu.domain.cvu_service.ProductoInvestigador"
+            ) as mock_producto:
+                with patch(
+                    "cvu.domain.cvu_service.PerfilUsuario"
+                ) as mock_perfil:
+                    mock_producto.objects.filter.return_value.select_related.return_value.order_by.return_value = [
+                        producto
+                    ]
+                    mock_perfil.objects.filter.return_value.first.return_value = (
+                        perfil_model
+                    )
+
+                    service = CVUService()
+                    service.get_perfil_usuario = Mock(
+                        return_value=Result.ok(perfil)
+                    )
+
+                    result = service.export_cvu(investigador_id)
+
+        assert result.is_ok()
+        document = result.unwrap()
+        assert document["filtro"] == "activos"
+        assert document["perfil"]["login"] == "ana.lopez"
+        assert document["perfil"]["cvu"] == "2082010"
+        assert document["perfil"]["principal"]["orcId"] == "0000-0001"
+        assert document["aportaciones"]["articulosCientifica"] == [
+            {"titulo": "Artículo editado", "id": "art-1"}
+        ]
+        dumped = json.dumps(document, ensure_ascii=False)
+        assert "Artículo editado" in dumped
+
+    def test_export_cvu_assigns_record_id_when_product_has_none(self):
+        investigador_id = uuid.uuid4()
+        registro_id = uuid.uuid4()
+        perfil = PerfilUsuarioDTO(
+            id=uuid.uuid4(),
+            usuario_id=investigador_id,
+            cvu="2082010",
+            nivel_academico=None,
+            titulo=None,
+            nombre="Ana",
+            primer_apellido="López",
+            segundo_apellido=None,
+            fotografia=None,
+            semblanza=None,
+            linkedin=None,
+            orcid=None,
+            correo_alternativo=None,
+            curp=None,
+            rfc=None,
+            fecha_nacimiento=None,
+        )
+
+        producto = Mock()
+        producto.contenido = {"titulo": "Capturado en formulario"}
+        producto.id_producto = None
+        producto.id = registro_id
+        producto.tipo.nombre = "articulosCientifica"
+
+        perfil_model = Mock()
+        perfil_model.cvu_origen = None
+
+        with patch("cvu.domain.cvu_service.CVURepository"):
+            with patch(
+                "cvu.domain.cvu_service.ProductoInvestigador"
+            ) as mock_producto:
+                with patch(
+                    "cvu.domain.cvu_service.PerfilUsuario"
+                ) as mock_perfil:
+                    mock_producto.objects.filter.return_value.select_related.return_value.order_by.return_value = [
+                        producto
+                    ]
+                    mock_perfil.objects.filter.return_value.first.return_value = (
+                        perfil_model
+                    )
+
+                    service = CVUService()
+                    service.get_perfil_usuario = Mock(
+                        return_value=Result.ok(perfil)
+                    )
+
+                    result = service.export_cvu(investigador_id)
+
+        assert result.is_ok()
+        articulos = result.unwrap()["aportaciones"]["articulosCientifica"]
+        assert articulos == [
+            {
+                "titulo": "Capturado en formulario",
+                "id": str(registro_id),
+            }
+        ]
+
+
+class TestProductoSerializer:
+    def test_assigns_id_when_product_has_none(self):
+        producto = {"titulo": "Sin identificador"}
+
+        data = ProductoSerializer(instance=producto).data
+
+        assert data["id"]
+        assert producto["id"] == data["id"]
+        assert data["contenido"]["id"] == data["id"]
+
+    def test_keeps_existing_id(self):
+        producto = {"id": "rizoma-9", "titulo": "Con identificador"}
+
+        data = ProductoSerializer(instance=producto).data
+
+        assert data["id"] == "rizoma-9"
+        assert producto["id"] == "rizoma-9"

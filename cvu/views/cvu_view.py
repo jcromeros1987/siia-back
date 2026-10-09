@@ -6,6 +6,7 @@
 #
 # Se utiliza posteriormente cuando necesitamos regresar
 # información de un DTO dentro de una respuesta HTTP.
+import json
 from dataclasses import asdict
 
 
@@ -18,6 +19,7 @@ from dataclasses import asdict
 # status.HTTP_201_CREATED
 # status.HTTP_400_BAD_REQUEST
 # status.HTTP_404_NOT_FOUND
+from django.http import HttpResponse
 from rest_framework import status
 
 
@@ -88,6 +90,31 @@ from cvu.utils import ErrorCode
 # ============================================================
 # VIEWSET DEL CVU
 # ============================================================
+
+def _result_error_message(result, fallback):
+    """Arma un texto visible a partir de un Result fallido."""
+
+    error = result.get_error()
+
+    if error is None:
+        return fallback
+
+    details = error.details
+
+    if isinstance(details, dict):
+        parts = []
+
+        for value in details.values():
+            if isinstance(value, (list, tuple)):
+                parts.extend(str(item) for item in value if item)
+            elif value:
+                parts.append(str(value))
+
+        if parts:
+            return " ".join(parts)
+
+    return error.message or fallback
+
 
 class CVUView(ViewSet):
     """
@@ -316,6 +343,67 @@ class CVUView(ViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+
+    # ========================================================
+    # DESCARGAR CVU EN FORMATO RIZOMA
+    # ========================================================
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="export"
+    )
+    def export(self, request, pk=None, *args, **kwargs):
+        """
+        Descarga el CVU con la misma estructura del archivo
+        que se carga desde Rizoma.
+        """
+
+        user_instance = User.objects.filter(id=pk).first()
+
+        if not user_instance:
+
+            return Response(
+                {
+                    "message": "Usuario no encontrado."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = self.service.export_cvu(user_instance.id)
+
+        if result.is_err():
+
+            error = result.get_error()
+
+            http_status = (
+                status.HTTP_404_NOT_FOUND
+                if error and error.code == ErrorCode.NOT_FOUND
+                else status.HTTP_400_BAD_REQUEST
+            )
+
+            return Response(
+                {
+                    "message": error.message if error else "Error al exportar el CVU"
+                },
+                status=http_status,
+            )
+
+        payload = json.dumps(
+            result.unwrap(),
+            ensure_ascii=False,
+            indent=2,
+        )
+
+        response = HttpResponse(
+            payload,
+            content_type="application/json; charset=utf-8",
+        )
+
+        response["Content-Disposition"] = 'attachment; filename="CVU.json"'
+
+        return response
 
 
     # ========================================================
@@ -567,12 +655,10 @@ class CVUView(ViewSet):
 
             return Response(
                 {
-                    "message": "Error al crear entrada",
-
-                    # NOTA:
-                    # Aquí nuevamente se utiliza unwrap()
-                    # sobre un resultado de error.
-                    "data": result.unwrap(),
+                    "message": _result_error_message(
+                        result,
+                        "No se pudo crear el registro."
+                    )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -663,12 +749,10 @@ class CVUView(ViewSet):
 
             return Response(
                 {
-                    "message":
-                        "Error al actualizar el producto de investigador",
-
-                    # Igual que en create(), aquí se intenta
-                    # obtener el resultado mediante unwrap().
-                    "data": result.unwrap(),
+                    "message": _result_error_message(
+                        result,
+                        "No se pudo actualizar el registro."
+                    )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

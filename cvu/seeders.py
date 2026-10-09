@@ -29,3 +29,46 @@ class ProyectosInvestigacionSeeder(seeders.Seeder):
             nombre="proyectosInvestigacion",
             defaults={"label": "Proyectos de Investigación"},
         )
+
+
+@SeederRegistry.register
+class UsuariosPruebaSeeder(seeders.Seeder):
+    """
+    Crea usuarios de prueba para iniciar sesión.
+
+    Admin puede ya existir en la base. Este seeder tiene su propio id
+    y solo inserta cada correo si todavía no está registrado.
+    """
+
+    id = "usuarios_prueba_seeder"
+    priority = 3
+
+    def seed(self):
+        usuarios = [
+            {
+                "email": "admin@planeacion.com.mx",
+                "name": "Admin",
+                "first_apellido": "Planeacion",
+                "second_apellido": "UNAM",
+                "password": "12345",
+            },
+            {
+                "email": "roberto@planeacion.com.mx",
+                "name": "Roberto",
+                "first_apellido": "Prueba",
+                "second_apellido": "CVU",
+                "password": "12345",
+            },
+            {
+                "email": "itzel@planeacion.com.mx",
+                "name": "Itzel",
+                "first_apellido": "Prueba",
+                "second_apellido": "CVU",
+                "password": "12345",
+            },
+        ]
+
+        for datos in usuarios:
+            if models.User.objects.filter(email=datos["email"]).exists():
+                continue
+            models.User.objects.create_user(**datos)

@@ -378,6 +378,17 @@ class PerfilUsuario(models.Model):
     )
 
 
+    # JSON original cargado desde Rizoma.
+    #
+    # La descarga parte de este documento y reescribe el perfil
+    # y los productos con la información actual, para conservar
+    # campos que el sistema no edita (institución, filtro, login).
+    cvu_origen = models.JSONField(
+        null=True,
+        blank=True
+    )
+
+
     # ---------------------------------------------------------
     # CONFIGURACIÓN DEL MODELO
     # ---------------------------------------------------------

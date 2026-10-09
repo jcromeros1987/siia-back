@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework import serializers
 
 from cvu.constants import POSSIBLE_TITLE_ATTRS
@@ -5,10 +7,16 @@ from cvu.utils import search_in_dict
 
 
 class ProductoSerializer(serializers.Serializer):
-    id = serializers.CharField()
+    id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     eje = serializers.CharField(required=False, allow_null=True)
     titulo = serializers.SerializerMethodField()
     contenido = serializers.SerializerMethodField()
+
+    def to_representation(self, instance):
+        if isinstance(instance, dict) and instance.get("id") in (None, ""):
+            instance["id"] = str(uuid.uuid4())
+
+        return super().to_representation(instance)
 
     def get_titulo(self, obj):
         titulo = search_in_dict(obj, POSSIBLE_TITLE_ATTRS)

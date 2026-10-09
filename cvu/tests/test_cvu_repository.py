@@ -484,7 +484,11 @@ class TestCVURepository:
         updated_producto = ProductoInvestigador.objects.get(id=producto.id)
         assert updated_producto.titulo == "New Title"
         assert updated_producto.eje == "new_eje"
-        assert updated_producto.contenido == {"updated": "data"}
+        assert updated_producto.contenido == {
+            "updated": "data",
+            "id": str(producto.id),
+        }
+        assert updated_producto.id_producto == str(producto.id)
 
     @pytest.mark.django_db
     def test_update_producto_investigador_ignores_inactive_products(self):

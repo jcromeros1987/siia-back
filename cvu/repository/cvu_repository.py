@@ -814,8 +814,27 @@ class CVURepository:
         # ----------------------------------------------------
         # ACTUALIZAR CONTENIDO
         # ----------------------------------------------------
+        #
+        # El formulario no captura id. Si el contenido nuevo
+        # no lo trae, se conserva el que ya tenía el producto
+        # para que la descarga siga pudiendo cargarse.
 
-        instance.contenido = data
+        contenido = dict(data) if isinstance(data, dict) else {}
+
+        if contenido.get("id") in (None, ""):
+            previo = (
+                instance.contenido.get("id")
+                if isinstance(instance.contenido, dict)
+                else None
+            )
+            contenido["id"] = str(
+                previo or instance.id_producto or instance.id
+            )
+
+        if not instance.id_producto and contenido.get("id"):
+            instance.id_producto = str(contenido["id"])
+
+        instance.contenido = contenido
 
 
         # ----------------------------------------------------
@@ -1227,6 +1246,46 @@ class CVURepository:
             self._perfil_to_dto(
                 saved_perfil
             )
+        )
+
+
+    # ========================================================
+    # GUARDAR JSON ORIGINAL DEL CVU
+    # ========================================================
+
+    def save_cvu_origen(
+        self,
+        investigador_id: UUID,
+        cvu_data: dict
+    ) -> Result[str]:
+        """
+        Guarda el documento JSON cargado desde Rizoma.
+
+        La descarga posterior usa este documento como base.
+        """
+
+        if not isinstance(cvu_data, dict):
+
+            return Result.err_from(
+                ErrorCode.INVALID_INPUT,
+                "El CVU original no tiene un formato válido."
+            )
+
+        updated = (
+            PerfilUsuario.objects
+            .filter(usuario=investigador_id)
+            .update(cvu_origen=cvu_data)
+        )
+
+        if not updated:
+
+            return Result.err_from(
+                ErrorCode.NOT_FOUND,
+                "No se encontró el perfil para guardar el CVU original."
+            )
+
+        return Result.ok(
+            "CVU original guardado."
         )
 
 

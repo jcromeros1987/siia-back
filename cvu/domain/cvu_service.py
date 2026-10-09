@@ -6,6 +6,7 @@
 # enviado por el usuario.
 #
 # El archivo CVU se recibe normalmente como un JSON.
+import copy
 import json
 
 
@@ -115,6 +116,208 @@ from cvu.utils import Result, ErrorCode
 # ============================================================
 # SERVICIO PRINCIPAL DEL CVU
 # ============================================================
+
+# Ubicación de cada tipo de producto dentro del JSON de Rizoma.
+# Coincide con PerfilCompletoSerializer.
+APORTACIONES_KEYS = (
+    "articulosCientifica",
+    "librosCientifica",
+    "capitulosCientifica",
+    "articulosDifusion",
+    "librosDifusion",
+    "capitulosDifusion",
+    "desarrolloTecnologicoInnovacion",
+    "propiedadIntelectual",
+    "transferenciaTecnologica",
+    "proyectosInvestigacion",
+)
+
+PERFIL_LIST_KEYS = (
+    "trayectoriaAcademica",
+    "logros",
+    "trayectoriaProfesional",
+    "evaluacionesOtorgadas",
+    "estancias",
+    "cursosImpartidos",
+    "congresos",
+)
+
+FORMACION_CONTINUA_KEYS = (
+    "cursos",
+    "certificacionesMedicas",
+)
+
+IDIOMA_LENGUA_KEYS = (
+    "idiomas",
+    "lenguas",
+)
+
+
+def producto_para_rizoma(contenido, id_producto, fallback_id=None):
+    """Devuelve el objeto de producto tal como lo espera Rizoma.
+
+    Si el contenido no trae id, se usa id_producto. Si ese también
+    falta, se usa fallback_id (el id del registro) para que el JSON
+    descargado se pueda volver a cargar.
+    """
+
+    item = dict(contenido) if isinstance(contenido, dict) else {}
+
+    if item.get("id") in (None, ""):
+        identificador = id_producto or fallback_id
+
+        if identificador:
+            item["id"] = str(identificador)
+
+    return item
+
+
+def _remove_key(node, key):
+    """Quita una clave de un diccionario y de los diccionarios anidados."""
+
+    if not isinstance(node, dict):
+        return
+
+    node.pop(key, None)
+
+    for value in node.values():
+        if isinstance(value, dict):
+            _remove_key(value, key)
+
+
+def _place_list(document, parents, key, items):
+    """Coloca una lista de productos en su ruta dentro del CVU."""
+
+    _remove_key(document, key)
+
+    node = document
+
+    for parent in parents:
+        current = node.get(parent)
+
+        if not isinstance(current, dict):
+            current = {}
+            node[parent] = current
+
+        node = current
+
+    node[key] = items
+
+
+def build_rizoma_cvu(perfil, productos_por_tipo, origen=None):
+    """
+    Arma el JSON de Rizoma.
+
+    Si existe el archivo original, se conserva y se reescriben
+    el perfil y los productos con la información actual.
+    """
+
+    document = (
+        copy.deepcopy(origen)
+        if isinstance(origen, dict)
+        else {}
+    )
+
+    if not isinstance(document.get("perfil"), dict):
+        document["perfil"] = {}
+
+    if not isinstance(document.get("aportaciones"), dict):
+        document["aportaciones"] = {}
+
+    perfil_node = document["perfil"]
+
+    perfil_node["cvu"] = perfil.get("cvu")
+    perfil_node["nivelAcademico"] = perfil.get("nivel_academico")
+    perfil_node["titulo"] = perfil.get("titulo")
+    perfil_node["correoAlternativo"] = perfil.get("correo_alternativo")
+
+    principal = perfil_node.get("principal")
+
+    if not isinstance(principal, dict):
+        principal = {}
+
+    perfil_node["principal"] = principal
+
+    principal.update({
+        "nombre": perfil.get("nombre"),
+        "primerApellido": perfil.get("primer_apellido"),
+        "segundoApellido": perfil.get("segundo_apellido"),
+        "fotografia": perfil.get("fotografia"),
+        "semblanza": perfil.get("semblanza"),
+        "linkedin": perfil.get("linkedin"),
+        "orcId": perfil.get("orcid"),
+        "intereses": perfil.get("intereses") or [],
+        "habilidades": perfil.get("habilidades") or [],
+        "curp": perfil.get("curp"),
+        "rfc": perfil.get("rfc"),
+        "fechaNacimiento": perfil.get("fecha_nacimiento"),
+        "sexo": perfil.get("sexo"),
+        "paisNacimiento": perfil.get("pais_nacimiento"),
+        "entidadFederativa": perfil.get("entidad_federativa"),
+        "estadoCivil": perfil.get("estado_civil"),
+        "nacionalidad": perfil.get("nacionalidad"),
+        "areaConocimiento": perfil.get("area_conocimiento"),
+    })
+
+    listas = {
+        ("aportaciones",): APORTACIONES_KEYS,
+        ("perfil",): PERFIL_LIST_KEYS,
+        ("perfil", "formacionContinua"): FORMACION_CONTINUA_KEYS,
+        ("perfil", "idiomaLengua"): IDIOMA_LENGUA_KEYS,
+    }
+
+    known_keys = set()
+
+    for parents, keys in listas.items():
+        for key in keys:
+            known_keys.add(key)
+            _place_list(
+                document,
+                parents,
+                key,
+                productos_por_tipo.get(key, []),
+            )
+
+    for tipo, items in productos_por_tipo.items():
+        if tipo in known_keys:
+            continue
+
+        if tipo in document or _key_exists(document, tipo):
+            _place_existing(document, tipo, items)
+        else:
+            document["aportaciones"][tipo] = items
+
+    return document
+
+
+def _key_exists(node, key):
+    if not isinstance(node, dict):
+        return False
+
+    if key in node:
+        return True
+
+    return any(
+        _key_exists(value, key)
+        for value in node.values()
+        if isinstance(value, dict)
+    )
+
+
+def _place_existing(node, key, items):
+    if not isinstance(node, dict):
+        return False
+
+    if key in node:
+        node[key] = items
+        return True
+
+    for value in node.values():
+        if isinstance(value, dict) and _place_existing(value, key, items):
+            return True
+
+    return False
+
 
 class CVUService:
     """
@@ -658,6 +861,21 @@ class CVUService:
                     productos,
                     investigador_id
                 )
+
+        ).and_then(
+
+            # ------------------------------------------------
+            # CONSERVAR EL JSON ORIGINAL
+            # ------------------------------------------------
+            #
+            # Se guarda el documento tal como llegó de Rizoma
+            # para poder reconstruirlo al descargar.
+
+            lambda message:
+                self.cvu_repository.save_cvu_origen(
+                    investigador_id,
+                    cvu_data,
+                ).map_value(lambda _: message)
         )
 
 
@@ -1649,6 +1867,71 @@ class CVUService:
     # ========================================================
     # OBTENER PERFIL
     # ========================================================
+
+    def export_cvu(
+        self,
+        investigador_id: UUID
+    ) -> Result[dict]:
+        """
+        Arma el JSON de Rizoma con el perfil y los productos actuales.
+
+        Si el investigador ya cargó un archivo, la descarga parte
+        de ese documento y conserva los campos que esta aplicación
+        no modifica.
+        """
+
+        perfil_result = self.get_perfil_usuario(investigador_id)
+
+        if perfil_result.is_err():
+            return Result.err(perfil_result.get_error())
+
+        perfil = asdict(perfil_result.unwrap())
+
+        productos = (
+            ProductoInvestigador.objects
+            .filter(
+                investigador_id=investigador_id,
+                status=True,
+            )
+            .select_related("tipo")
+            .order_by("fecha_creacion", "id")
+        )
+
+        productos_por_tipo = {}
+
+        for producto in productos:
+            item = producto_para_rizoma(
+                producto.contenido,
+                producto.id_producto,
+                producto.id,
+            )
+
+            productos_por_tipo.setdefault(
+                producto.tipo.nombre,
+                [],
+            ).append(item)
+
+        perfil_model = (
+            PerfilUsuario.objects
+            .filter(usuario=investigador_id)
+            .first()
+        )
+
+        origen = (
+            perfil_model.cvu_origen
+            if perfil_model is not None
+            and isinstance(perfil_model.cvu_origen, dict)
+            else None
+        )
+
+        return Result.ok(
+            build_rizoma_cvu(
+                perfil,
+                productos_por_tipo,
+                origen,
+            )
+        )
+
 
     def get_perfil_usuario(
         self,

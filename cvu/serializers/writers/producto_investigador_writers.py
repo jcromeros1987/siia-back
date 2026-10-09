@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework import serializers
 
 from cvu.constants import POSSIBLE_TITLE_ATTRS
@@ -52,6 +54,20 @@ class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
 
         return eje, titulo
 
+    def _ensure_id(self, contenido, existing_id=None):
+        """Garantiza que el contenido tenga id y lo devuelve."""
+
+        if not isinstance(contenido, dict):
+            return existing_id
+
+        producto_id = contenido.get("id")
+
+        if producto_id in (None, ""):
+            producto_id = existing_id or str(uuid.uuid4())
+
+        contenido["id"] = str(producto_id)
+        return contenido["id"]
+
     def create(self, validated_data):
         # Derivar eje y titulo desde `contenido` si no vienen proporcionados
         contenido = validated_data.get("contenido")
@@ -64,6 +80,11 @@ class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
             validated_data["eje"] = derived_eje
         if not titulo and derived_titulo:
             validated_data["titulo"] = derived_titulo
+
+        producto_id = self._ensure_id(contenido)
+
+        if producto_id:
+            validated_data["id_producto"] = producto_id
 
         # Crear la instancia usando el modelo
         return ProductoInvestigador.objects.create(**validated_data)
@@ -80,6 +101,21 @@ class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
             validated_data["eje"] = derived_eje
         if not titulo and derived_titulo:
             validated_data["titulo"] = derived_titulo
+
+        existing_id = instance.id_producto
+        if isinstance(instance.contenido, dict) and instance.contenido.get("id"):
+            existing_id = instance.contenido.get("id")
+
+        producto_id = self._ensure_id(
+            contenido if isinstance(contenido, dict) else None,
+            existing_id or (str(instance.id) if instance.id else None),
+        )
+
+        if isinstance(contenido, dict):
+            validated_data["contenido"] = contenido
+
+        if producto_id and not instance.id_producto:
+            validated_data["id_producto"] = producto_id
 
         # Actualizar campos en la instancia
         for attr, value in validated_data.items():
@@ -108,7 +144,7 @@ class ProductoInvestigadorRegisterSerializer(serializers.ModelSerializer):
         if not attrs.get("titulo"):
             raise serializers.ValidationError(
                 {
-                    "titulo": "No se pudo derivar `titulo` desde `contenido`. Proporcione `titulo`."
+                    "titulo": "No se pudo crear el registro porque falta el título. Capture el nombre o el título del producto."
                 }
             )
 
